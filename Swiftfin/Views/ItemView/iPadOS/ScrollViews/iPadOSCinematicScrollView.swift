@@ -36,7 +36,7 @@ extension ItemView {
                     ImageView(viewModel.item.imageSource(.backdrop, maxWidth: 1920))
                 }
             }
-            .aspectRatio(1.77, contentMode: .fill)
+            .aspectRatio(contentMode: .fill)
         }
 
         var body: some View {
@@ -76,6 +76,9 @@ extension ItemView {
 extension ItemView.iPadOSCinematicScrollView {
 
     struct OverlayView: View {
+
+        @EnvironmentObject
+        private var router: ItemCoordinator.Router
 
         @ObservedObject
         var viewModel: ItemViewModel

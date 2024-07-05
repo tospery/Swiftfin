@@ -9,6 +9,9 @@
 import JellyfinAPI
 import SwiftUI
 
+// TODO: fix with shorter text
+//       - seems to center align
+
 struct ItemOverviewView: View {
 
     @EnvironmentObject
@@ -30,10 +33,8 @@ struct ItemOverviewView: View {
                 if let itemOverview = item.overview {
                     Text(itemOverview)
                         .font(.body)
-                        .multilineTextAlignment(.leading)
                 }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
             .edgePadding()
         }
         .navigationTitle(item.displayTitle)

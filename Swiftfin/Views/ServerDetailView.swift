@@ -9,35 +9,21 @@
 import Factory
 import SwiftUI
 
-// Note: uses environment `isEditing` for deletion button. This was done
-//       to just prevent having 2 views that looked/interacted the same
-//       except for a single button.
-
-// TODO: change URL picker from menu to list with network-url mapping
-
-struct EditServerView: View {
-
-    @EnvironmentObject
-    private var router: SelectUserCoordinator.Router
-
-    @Environment(\.isEditing)
-    private var isEditing
+struct ServerDetailView: View {
 
     @State
     private var currentServerURL: URL
-    @State
-    private var isPresentingConfirmDeletion: Bool = false
 
     @StateObject
-    private var viewModel: EditServerViewModel
+    private var viewModel: ServerDetailViewModel
 
     init(server: ServerState) {
-        self._viewModel = StateObject(wrappedValue: EditServerViewModel(server: server))
+        self._viewModel = StateObject(wrappedValue: ServerDetailViewModel(server: server))
         self._currentServerURL = State(initialValue: server.currentURL)
     }
 
     var body: some View {
-        List {
+        Form {
             Section {
 
                 TextPairView(
@@ -51,28 +37,24 @@ struct EditServerView: View {
                             .tag(url)
                             .foregroundColor(.secondary)
                     }
+                    .onChange(of: currentServerURL) { _ in
+                        // TODO: change server url
+                        viewModel.setCurrentServerURL(to: currentServerURL)
+                    }
                 }
-            }
 
-            if isEditing {
-                ListRowButton("Delete") {
-                    isPresentingConfirmDeletion = true
-                }
-                .foregroundStyle(.red, .red.opacity(0.2))
+                TextPairView(
+                    leading: L10n.version,
+                    trailing: viewModel.server.version
+                )
+
+                TextPairView(
+                    leading: L10n.operatingSystem,
+                    trailing: viewModel.server.os
+                )
             }
         }
-        .navigationTitle(L10n.server)
         .navigationBarTitleDisplayMode(.inline)
-        .onChange(of: currentServerURL) { newValue in
-            viewModel.setCurrentURL(to: newValue)
-        }
-        .alert("Delete Server", isPresented: $isPresentingConfirmDeletion) {
-            Button("Delete", role: .destructive) {
-                viewModel.delete()
-                router.popLast()
-            }
-        } message: {
-            Text("Are you sure you want to delete \(viewModel.server.name) and all of its connected users?")
-        }
+        .navigationTitle(L10n.server)
     }
 }

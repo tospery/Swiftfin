@@ -19,8 +19,8 @@ struct SettingsView: View {
     @EnvironmentObject
     private var router: SettingsCoordinator.Router
 
-    @StateObject
-    private var viewModel = SettingsViewModel()
+    @ObservedObject
+    var viewModel: SettingsViewModel
 
     var body: some View {
         SplitFormWindowView()
@@ -41,7 +41,7 @@ struct SettingsView: View {
                     }
 
                     ChevronButton(
-                        L10n.server,
+                        title: L10n.server,
                         subtitle: viewModel.userSession.server.name
                     )
                     .onSelect {
@@ -60,7 +60,7 @@ struct SettingsView: View {
 
                     InlineEnumToggle(title: "Video Player Type", selection: $videoPlayerType)
 
-                    ChevronButton(L10n.videoPlayer)
+                    ChevronButton(title: L10n.videoPlayer)
                         .onSelect {
                             router.route(to: \.videoPlayerSettings)
                         }
@@ -70,12 +70,12 @@ struct SettingsView: View {
 
                 Section {
 
-                    ChevronButton(L10n.customize)
+                    ChevronButton(title: L10n.customize)
                         .onSelect {
                             router.route(to: \.customizeViewsSettings)
                         }
 
-                    ChevronButton(L10n.experimental)
+                    ChevronButton(title: L10n.experimental)
                         .onSelect {
                             router.route(to: \.experimentalSettings)
                         }
@@ -86,7 +86,7 @@ struct SettingsView: View {
 
                 Section {
 
-                    ChevronButton("Logs")
+                    ChevronButton(title: "Logs")
                         .onSelect {
                             router.route(to: \.log)
                         }

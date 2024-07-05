@@ -16,8 +16,8 @@ extension MediaStream {
     static var none: MediaStream = .init(displayTitle: L10n.none, index: -1)
 
     var asPlaybackChild: VLCVideoPlayer.PlaybackChild? {
-        guard let deliveryURL, let client = Container.shared.currentUserSession()?.client else { return nil }
-
+        guard let deliveryURL else { return nil }
+        let client = Container.userSession().client
         let deliveryPath = deliveryURL.removingFirst(if: client.configuration.url.absoluteString.last == "/")
 
         guard let fullURL = client.fullURL(with: deliveryPath) else { return nil }
@@ -250,22 +250,22 @@ extension [MediaStream] {
     }
 
     var has4KVideo: Bool {
-        contains { $0.is4kVideo }
+        oneSatisfies { $0.is4kVideo }
     }
 
     var has51AudioChannelLayout: Bool {
-        contains { $0.is51AudioChannelLayout }
+        oneSatisfies { $0.is51AudioChannelLayout }
     }
 
     var has71AudioChannelLayout: Bool {
-        contains { $0.is71AudioChannelLayout }
+        oneSatisfies { $0.is71AudioChannelLayout }
     }
 
     var hasHDVideo: Bool {
-        contains { $0.isHDVideo }
+        oneSatisfies { $0.isHDVideo }
     }
 
     var hasSubtitles: Bool {
-        contains { $0.type == .subtitle }
+        oneSatisfies { $0.type == .subtitle }
     }
 }

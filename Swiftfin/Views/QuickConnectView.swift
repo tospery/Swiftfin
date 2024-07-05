@@ -6,28 +6,57 @@
 // Copyright (c) 2024 Jellyfin & Jellyfin Contributors
 //
 
-import JellyfinAPI
 import SwiftUI
 
 struct QuickConnectView: View {
-
     @EnvironmentObject
-    private var router: UserSignInCoordinator.Router
+    private var router: QuickConnectCoordinator.Router
 
     @ObservedObject
-    private var viewModel: QuickConnect
+    var viewModel: QuickConnectViewModel
 
-    init(quickConnect: QuickConnect) {
-        self.viewModel = quickConnect
+    // Once the auth secret is fetched, run this and dismiss this view
+    var signIn: @MainActor (_: String) -> Void
+
+    func quickConnectWaitingAuthentication(quickConnectCode: String) -> some View {
+        Text(quickConnectCode)
+            .tracking(10)
+            .font(.largeTitle)
+            .monospacedDigit()
+            .frame(maxWidth: .infinity)
     }
 
-    private func pollingView(code: String) -> some View {
+    var quickConnectFailed: some View {
+        Label {
+            Text("Failed to retrieve quick connect code")
+        } icon: {
+            Image(systemName: "exclamationmark.circle.fill")
+                .foregroundColor(.red)
+        }
+    }
+
+    var quickConnectLoading: some View {
+        HStack {
+            Spacer()
+            ProgressView()
+            Spacer()
+        }
+    }
+
+    @ViewBuilder
+    var quickConnectBody: some View {
+        switch viewModel.state {
+        case let .awaitingAuthentication(code):
+            quickConnectWaitingAuthentication(quickConnectCode: code)
+        case .initial, .fetchingSecret, .authenticated:
+            quickConnectLoading
+        case .error:
+            quickConnectFailed
+        }
+    }
+
+    var body: some View {
         VStack(alignment: .leading, spacing: 20) {
-
-            // TODO: change strings so that numbers are removed
-            //       and use `BulletedList`
-            //       - also probably rephrase/change steps
-
             L10n.quickConnectStep1.text
 
             L10n.quickConnectStep2.text
@@ -35,42 +64,26 @@ struct QuickConnectView: View {
             L10n.quickConnectStep3.text
                 .padding(.bottom)
 
-            Text(code)
-                .tracking(10)
-                .font(.largeTitle)
-                .monospacedDigit()
-                .frame(maxWidth: .infinity)
+            quickConnectBody
 
             Spacer()
         }
-        .frame(maxWidth: .infinity)
-        .edgePadding()
-    }
-
-    var body: some View {
-        WrappedView {
-            switch viewModel.state {
-            case .idle, .authenticated:
-                Color.clear
-            case .retrievingCode:
-                ProgressView()
-            case let .polling(code):
-                pollingView(code: code)
-            case let .error(error):
-                ErrorView(error: error)
+        .padding(.horizontal)
+        .navigationTitle(L10n.quickConnect)
+        .onChange(of: viewModel.state) { newState in
+            if case let .authenticated(secret: secret) = newState {
+                signIn(secret)
+                router.dismissCoordinator()
             }
         }
-        .edgePadding()
-        .navigationTitle(L10n.quickConnect)
-        .navigationBarTitleDisplayMode(.inline)
-        .onFirstAppear {
-            viewModel.start()
+        .onAppear {
+            viewModel.send(.startQuickConnect)
         }
         .onDisappear {
-            viewModel.stop()
+            viewModel.send(.cancelQuickConnect)
         }
         .navigationBarCloseButton {
-            router.popLast()
+            router.dismissCoordinator()
         }
     }
 }

@@ -1,5 +1,5 @@
 {
-  "originHash" : "651194fc1966b57201a0de2cba27dc40798bbdf515febdc83f00d634d916fea4",
+  "originHash" : "c477e4f1cd54bd525946c46dd4d4243ceca54f879672628a772af4ecb8aa0a79",
   "pins" : [
     {
       "identity" : "blurhashkit",
@@ -34,7 +34,7 @@
       "location" : "https://github.com/LePips/CollectionVGrid",
       "state" : {
         "branch" : "main",
-        "revision" : "91ba930a502761924204ae74a59ded05f3b7ef89"
+        "revision" : "e4e0adc7722430870293e390e32d35c37a0d047b"
       }
     },
     {
@@ -51,8 +51,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/sindresorhus/Defaults",
       "state" : {
-        "revision" : "38925e3cfacf3fb89a81a35b1cd44fd5a5b7e0fa",
-        "version" : "8.2.0"
+        "revision" : "3efef5a28ebdbbe922d4a2049493733ed14475a6",
+        "version" : "7.3.1"
       }
     },
     {
@@ -69,8 +69,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/hmlongco/Factory",
       "state" : {
-        "revision" : "587995f7d5cc667951d635fbf6b4252324ba0439",
-        "version" : "2.3.2"
+        "revision" : "39ff6a675cd0272d833d184d35add0f8fddd63de",
+        "version" : "1.3.7"
       }
     },
     {
@@ -87,8 +87,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/kean/Get",
       "state" : {
-        "revision" : "74dba201ebe42e9c15c1db6ee1cc893025bbef94",
-        "version" : "2.2.0"
+        "revision" : "12830cc64f31789ae6f4352d2d51d03a25fc3741",
+        "version" : "2.1.6"
       }
     },
     {
@@ -96,26 +96,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/jellyfin/jellyfin-sdk-swift.git",
       "state" : {
-        "revision" : "eae2ab5ed7caf770d79afbcdae08aab48df27a6e",
-        "version" : "0.3.4"
-      }
-    },
-    {
-      "identity" : "keychain-swift",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/evgenyneu/keychain-swift",
-      "state" : {
-        "revision" : "5e1b02b6a9dac2a759a1d5dbc175c86bd192a608",
-        "version" : "24.0.0"
-      }
-    },
-    {
-      "identity" : "mantis",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/guoyingtao/Mantis",
-      "state" : {
-        "revision" : "ccc498ea429774d948a0a8aacacde207f7ffff48",
-        "version" : "2.21.0"
+        "revision" : "30957ea3fe007eaecb203d16217c0c07dc3bcd8e",
+        "version" : "0.3.3"
       }
     },
     {
@@ -123,8 +105,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/kean/Nuke",
       "state" : {
-        "revision" : "7395c7a9dcd390bbcfad17a731d8d529602702c6",
-        "version" : "12.7.0"
+        "revision" : "4625c73ea00a9fb4b4f3e28d95d0021a44af7e59",
+        "version" : "12.5.0"
       }
     },
     {
@@ -132,8 +114,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/kean/Pulse",
       "state" : {
-        "revision" : "d1e39ffaaa8b8becff80cb193c93a78e32077af8",
-        "version" : "4.2.0"
+        "revision" : "d647e99f06abc94d63579e335ad4ce368195c149",
+        "version" : "4.0.5"
       }
     },
     {
@@ -204,8 +186,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/siteline/SwiftUI-Introspect",
       "state" : {
-        "revision" : "668a65735751432b640260c56dfa621cec568368",
-        "version" : "1.2.0"
+        "revision" : "121c146fe591b1320238d054ae35c81ffa45f45a",
+        "version" : "0.12.0"
       }
     },
     {

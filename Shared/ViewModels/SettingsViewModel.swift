@@ -11,19 +11,12 @@ import Defaults
 import Factory
 import Files
 import Foundation
-import JellyfinAPI
 import UIKit
-
-// TODO: should probably break out into a `Settings` and `AppSettings` view models
-//       - don't need delete user profile image from app settings
-//       - could clean up all settings view models
 
 final class SettingsViewModel: ViewModel {
 
     @Published
     var currentAppIcon: any AppIcon = PrimaryAppIcon.primary
-    @Published
-    var servers: [ServerState] = []
 
     override init() {
 
@@ -35,50 +28,35 @@ final class SettingsViewModel: ViewModel {
 
         if let appicon = PrimaryAppIcon.createCase(iconName: iconName) {
             currentAppIcon = appicon
+            super.init()
+            return
         }
 
         if let appicon = DarkAppIcon.createCase(iconName: iconName) {
             currentAppIcon = appicon
+            super.init()
+            return
         }
 
         if let appicon = InvertedDarkAppIcon.createCase(iconName: iconName) {
             currentAppIcon = appicon
+            super.init()
+            return
         }
 
         if let appicon = InvertedLightAppIcon.createCase(iconName: iconName) {
             currentAppIcon = appicon
+            super.init()
+            return
         }
 
         if let appicon = LightAppIcon.createCase(iconName: iconName) {
             currentAppIcon = appicon
+            super.init()
+            return
         }
 
         super.init()
-
-        do {
-            servers = try getServers()
-        } catch {
-            logger.critical("Could not retrieve servers")
-        }
-    }
-
-    func deleteCurrentUserProfileImage() {
-        Task {
-            let request = Paths.deleteUserImage(
-                userID: userSession.user.id,
-                imageType: "Primary"
-            )
-            let _ = try await userSession.client.send(request)
-
-            let currentUserRequest = Paths.getCurrentUser
-            let response = try await userSession.client.send(currentUserRequest)
-
-            await MainActor.run {
-                userSession.user.data = response.value
-
-                Notifications[.didChangeUserProfileImage].post()
-            }
-        }
     }
 
     func select(icon: any AppIcon) {
@@ -100,17 +78,21 @@ final class SettingsViewModel: ViewModel {
         }
     }
 
-    private func getServers() throws -> [ServerState] {
-        try SwiftfinStore
-            .dataStack
-            .fetchAll(From<ServerModel>())
-            .map(\.state)
-            .sorted(using: \.name)
+    func signOut() {
+        Defaults[.lastServerUserID] = nil
+        Container.userSession.reset()
+        Notifications[.didSignOut].post()
     }
 
-    func signOut() {
-        Defaults[.lastSignedInUserID] = nil
-        Container.shared.currentUserSession.reset()
-        Notifications[.didSignOut].post()
+    func resetUserSettings() {
+        UserDefaults.generalSuite.removeAll()
+    }
+
+    func removeAllServers() {
+        guard let allServers = try? SwiftfinStore.dataStack.fetchAll(From<ServerModel>()) else { return }
+
+        try? SwiftfinStore.dataStack.perform { transaction in
+            transaction.delete(allServers)
+        }
     }
 }

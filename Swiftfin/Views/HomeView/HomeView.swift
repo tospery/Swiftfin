@@ -7,7 +7,6 @@
 //
 
 import Defaults
-import Factory
 import Foundation
 import SwiftUI
 
@@ -18,34 +17,24 @@ struct HomeView: View {
 
     @Default(.Customization.nextUpPosterType)
     private var nextUpPosterType
-    @Default(.Customization.showRecentlyAdded)
-    private var showRecentlyAdded
     @Default(.Customization.recentlyAddedPosterType)
     private var recentlyAddedPosterType
 
-    @EnvironmentObject
-    private var mainRouter: MainCoordinator.Router
     @EnvironmentObject
     private var router: HomeCoordinator.Router
 
     @StateObject
     private var viewModel = HomeViewModel()
 
-    @ViewBuilder
     private var contentView: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 10) {
 
                 ContinueWatchingView(viewModel: viewModel)
 
-                NextUpView(viewModel: viewModel.nextUpViewModel)
-                    .onSetPlayed { item in
-                        viewModel.send(.setIsPlayed(true, item))
-                    }
+                NextUpView(homeViewModel: viewModel)
 
-                if showRecentlyAdded {
-                    RecentlyAddedView(viewModel: viewModel.recentlyAddedViewModel)
-                }
+                RecentlyAddedView(viewModel: viewModel.recentlyAddedViewModel)
 
                 ForEach(viewModel.libraries) { viewModel in
                     LatestInLibraryView(viewModel: viewModel)
@@ -66,7 +55,7 @@ struct HomeView: View {
     }
 
     var body: some View {
-        ZStack {
+        WrappedView {
             switch viewModel.state {
             case .content:
                 contentView
@@ -76,7 +65,7 @@ struct HomeView: View {
                 DelayedProgressView()
             }
         }
-        .animation(.linear(duration: 0.1), value: viewModel.state)
+        .transition(.opacity.animation(.linear(duration: 0.2)))
         .onFirstAppear {
             viewModel.send(.refresh)
         }
@@ -87,11 +76,11 @@ struct HomeView: View {
                 ProgressView()
             }
 
-            SettingsBarButton(
-                server: viewModel.userSession.server,
-                user: viewModel.userSession.user
-            ) {
-                mainRouter.route(to: \.settings)
+            Button {
+                router.route(to: \.settings)
+            } label: {
+                Image(systemName: "gearshape.fill")
+                    .accessibilityLabel(L10n.settings)
             }
         }
         .sinceLastDisappear { interval in

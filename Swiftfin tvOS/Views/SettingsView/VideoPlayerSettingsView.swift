@@ -44,7 +44,7 @@ struct VideoPlayerSettingsView: View {
 
                 Section {
                     ChevronButton(
-                        "Resume Offset",
+                        title: "Resume Offset",
                         subtitle: resumeOffset.secondLabel
                     )
                     .onSelect {
@@ -55,7 +55,7 @@ struct VideoPlayerSettingsView: View {
                 }
 
                 Section {
-                    ChevronButton(L10n.subtitleFont, subtitle: subtitleFontName)
+                    ChevronButton(title: L10n.subtitleFont, subtitle: subtitleFontName)
                         .onSelect {
                             router.route(to: \.fontPicker, $subtitleFontName)
                         }

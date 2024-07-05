@@ -8,51 +8,31 @@
 
 import SwiftUI
 
-// TODO: use _UIHostingView for button animation workaround?
-//       - have a nice animation for toggle
-
 struct UnmaskSecureField: UIViewRepresentable {
 
     @Binding
     private var text: String
 
-    private let onReturn: () -> Void
-    private let title: String
+    let title: String
 
-    init(
-        _ title: String,
-        text: Binding<String>,
-        onReturn: @escaping () -> Void = {}
-    ) {
-        self._text = text
+    init(_ title: String, text: Binding<String>) {
         self.title = title
-        self.onReturn = onReturn
+        self._text = text
     }
 
-    func makeUIView(context: Context) -> UITextField {
+    func makeUIView(context: Context) -> some UIView {
 
         let textField = UITextField()
         textField.isSecureTextEntry = true
         textField.keyboardType = .asciiCapable
         textField.placeholder = title
         textField.text = text
-        textField.addTarget(
-            context.coordinator,
-            action: #selector(Coordinator.textDidChange),
-            for: .editingChanged
-        )
+        textField.addTarget(context.coordinator, action: #selector(Coordinator.textDidChange), for: .editingChanged)
 
         let button = UIButton(type: .custom)
         button.translatesAutoresizingMaskIntoConstraints = false
-        button.addTarget(
-            context.coordinator,
-            action: #selector(Coordinator.buttonPressed),
-            for: .touchUpInside
-        )
-        button.setImage(
-            UIImage(systemName: "eye.fill"),
-            for: .normal
-        )
+        button.addTarget(context.coordinator, action: #selector(Coordinator.buttonPressed), for: .touchUpInside)
+        button.setImage(UIImage(systemName: "eye.fill"), for: .normal)
 
         NSLayoutConstraint.activate([
             button.heightAnchor.constraint(equalToConstant: 50),
@@ -63,32 +43,24 @@ struct UnmaskSecureField: UIViewRepresentable {
         textField.rightViewMode = .always
 
         context.coordinator.button = button
-        context.coordinator.onReturn = onReturn
         context.coordinator.textField = textField
         context.coordinator.textDidChange()
         context.coordinator.textBinding = _text
 
-        textField.delegate = context.coordinator
-
         return textField
     }
 
-    func updateUIView(_ textField: UITextField, context: Context) {
-        if text != textField.text {
-            textField.text = text
-        }
-    }
+    func updateUIView(_ uiView: UIViewType, context: Context) {}
 
     func makeCoordinator() -> Coordinator {
         Coordinator()
     }
 
-    class Coordinator: NSObject, UITextFieldDelegate {
+    class Coordinator {
 
         weak var button: UIButton?
         weak var textField: UITextField?
         var textBinding: Binding<String> = .constant("")
-        var onReturn: () -> Void = {}
 
         @objc
         func buttonPressed() {
@@ -104,11 +76,6 @@ struct UnmaskSecureField: UIViewRepresentable {
             guard let textField, let text = textField.text else { return }
             button?.isEnabled = !text.isEmpty
             textBinding.wrappedValue = text
-        }
-
-        func textFieldShouldReturn(_ textField: UITextField) -> Bool {
-            onReturn()
-            return true
         }
     }
 }

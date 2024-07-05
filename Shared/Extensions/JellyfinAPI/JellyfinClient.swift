@@ -9,7 +9,6 @@
 import Foundation
 import Get
 import JellyfinAPI
-import UIKit
 
 extension JellyfinClient {
 
@@ -27,30 +26,8 @@ extension JellyfinClient {
     /// Appends the path to the current configuration `URL`, assuming that the path begins with a leading `/`.
     /// Returns `nil` if the new `URL` is malformed.
     func fullURL(with path: String) -> URL? {
-        let fullPath = configuration.url.absoluteString.trimmingCharacters(in: ["/"]) + path
-        return URL(string: fullPath)
-    }
-}
-
-extension JellyfinClient.Configuration {
-
-    static func swiftfinConfiguration(url: URL) -> Self {
-
-        let client = "Swiftfin \(UIDevice.platform)"
-        let deviceName = UIDevice.current.name
-            .folding(options: .diacriticInsensitive, locale: .current)
-            .unicodeScalars
-            .filter { CharacterSet.urlQueryAllowed.contains($0) }
-            .description
-        let deviceID = "\(UIDevice.platform)_\(UIDevice.vendorUUIDString)"
-        let version = (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String) ?? "0.0.1"
-
-        return .init(
-            url: url,
-            client: client,
-            deviceName: deviceName,
-            deviceID: deviceID,
-            version: version
-        )
+        guard let fullPath = URL(string: configuration.url.absoluteString.trimmingCharacters(in: ["/"]) + path)
+        else { return nil }
+        return fullPath
     }
 }

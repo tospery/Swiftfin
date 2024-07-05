@@ -35,8 +35,7 @@ extension SeriesEpisodeSelector {
                     Image(systemName: "checkmark.circle.fill")
                         .resizable()
                         .frame(width: 30, height: 30, alignment: .bottomTrailing)
-                        .symbolRenderingMode(.palette)
-                        .foregroundStyle(.white, .black)
+                        .paletteOverlayRendering(color: .white)
                         .padding()
                 }
             }

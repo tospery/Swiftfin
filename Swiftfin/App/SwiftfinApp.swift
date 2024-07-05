@@ -8,9 +8,7 @@
 
 import CoreStore
 import Defaults
-import Factory
 import Logging
-import Nuke
 import PreferencesView
 import Pulse
 import PulseLogHandler
@@ -22,15 +20,20 @@ struct SwiftfinApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self)
     var appDelegate
 
-    @StateObject
-    private var valueObservation = ValueObservation()
-
     init() {
 
-        // CoreStore
+        // Defaults
+        Task {
+            for await newValue in Defaults.updates(.accentColor) {
+                UIApplication.shared.setAccentColor(newValue.uiColor)
+            }
+        }
 
-        CoreStoreDefaults.dataStack = SwiftfinStore.dataStack
-        CoreStoreDefaults.logger = SwiftfinCorestoreLogger()
+        Task {
+            for await newValue in Defaults.updates(.appAppearance) {
+                UIApplication.shared.setAppearance(newValue.style)
+            }
+        }
 
         // Logging
         LoggingSystem.bootstrap { label in
@@ -44,31 +47,11 @@ struct SwiftfinApp: App {
             return MultiplexLogHandler(loggers)
         }
 
-        // Nuke
-
-        ImageCache.shared.costLimit = 1024 * 1024 * 200 // 200 MB
-        ImageCache.shared.ttl = 300 // 5 min
-
-        ImageDecoderRegistry.shared.register { context in
-            guard let mimeType = context.urlResponse?.mimeType else { return nil }
-            return mimeType.contains("svg") ? ImageDecoders.Empty() : nil
-        }
-
-        ImagePipeline.shared = .Swiftfin.default
-
-        // UIKit
-
-        UIScrollView.appearance().keyboardDismissMode = .onDrag
+        CoreStoreDefaults.dataStack = SwiftfinStore.dataStack
+        CoreStoreDefaults.logger = SwiftfinCorestoreLogger()
 
         // Sometimes the tab bar won't appear properly on push, always have material background
         UITabBar.appearance().scrollEdgeAppearance = UITabBarAppearance(idiom: .unspecified)
-
-        // Swiftfin
-
-        // don't keep last user id
-        if Defaults[.signOutOnClose] {
-            Defaults[.lastSignedInUserID] = nil
-        }
     }
 
     var body: some Scene {
@@ -79,20 +62,8 @@ struct SwiftfinApp: App {
                     .supportedOrientations(UIDevice.isPad ? .allButUpsideDown : .portrait)
             }
             .ignoresSafeArea()
-            .onNotification(UIApplication.didEnterBackgroundNotification) { _ in
-                Defaults[.backgroundTimeStamp] = Date.now
-            }
-            .onNotification(UIApplication.willEnterForegroundNotification) { _ in
-
-                // TODO: needs to check if any background playback is happening
-                //       - atow, background video playback isn't officially supported
-                let backgroundedInterval = Date.now.timeIntervalSince(Defaults[.backgroundTimeStamp])
-
-                if backgroundedInterval > Defaults[.backgroundSignOutInterval] {
-                    Defaults[.lastSignedInUserID] = nil
-                    Container.shared.currentUserSession.reset()
-                    Notifications[.didSignOut].post()
-                }
+            .onOpenURL { url in
+                AppURLHandler.shared.processDeepLink(url: url)
             }
         }
     }

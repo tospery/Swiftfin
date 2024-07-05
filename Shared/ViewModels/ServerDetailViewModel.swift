@@ -10,7 +10,7 @@ import CoreStore
 import Foundation
 import JellyfinAPI
 
-class EditServerViewModel: ViewModel {
+class ServerDetailViewModel: ViewModel {
 
     @Published
     var server: ServerState
@@ -19,59 +19,36 @@ class EditServerViewModel: ViewModel {
         self.server = server
     }
 
-    // TODO: this could probably be cleaner
-    func delete() {
+    func setCurrentServerURL(to url: URL) {
 
-        guard let storedServer = try? dataStack.fetchOne(From<ServerModel>().where(\.$id == server.id)) else {
-            logger.critical("Unable to find server to delete")
+        guard let storedServer = try? SwiftfinStore.dataStack.fetchOne(
+            From<ServerModel>(),
+            [Where<ServerModel>("id == %@", server.id)]
+        ) else {
+            logger.error("Unable to find server")
             return
         }
 
-        let userStates = storedServer.users.map(\.state)
-
-        // Note: don't use Server/UserState.delete() to have
-        //       all deletions in a single transaction
-        do {
-            try dataStack.perform { transaction in
-
-                /// Delete stored data for all users
-                for user in storedServer.users {
-                    let storedDataClause = AnyStoredData.fetchClause(ownerID: user.id)
-                    let storedData = try transaction.fetchAll(storedDataClause)
-
-                    transaction.delete(storedData)
-                }
-
-                transaction.delete(storedServer.users)
-                transaction.delete(storedServer)
-            }
-
-            for user in userStates {
-                UserDefaults.userSuite(id: user.id).removeAll()
-            }
-
-            Notifications[.didDeleteServer].post(object: server)
-        } catch {
-            logger.critical("Unable to delete server: \(server.name)")
+        guard storedServer.urls.contains(url) else {
+            logger.error("Server did not have matching URL")
+            return
         }
-    }
 
-    func setCurrentURL(to url: URL) {
+        let transaction = SwiftfinStore.dataStack.beginUnsafe()
+
+        guard let editServer = transaction.edit(storedServer) else {
+            logger.error("Unable to create edit server instance")
+            return
+        }
+
+        editServer.currentURL = url
+
         do {
-            let newState = try dataStack.perform { transaction in
-                guard let storedServer = try transaction.fetchOne(From<ServerModel>().where(\.$id == self.server.id)) else {
-                    throw JellyfinAPIError("Unable to find server for URL change: \(self.server.name)")
-                }
-                storedServer.currentURL = url
+            try transaction.commitAndWait()
 
-                return storedServer.state
-            }
-
-            Notifications[.didChangeCurrentServerURL].post(object: newState)
-
-            self.server = newState
+            Notifications[.didChangeCurrentServerURL].post(object: editServer.state)
         } catch {
-            logger.critical("\(error.localizedDescription)")
+            logger.error("Unable to edit server")
         }
     }
 }

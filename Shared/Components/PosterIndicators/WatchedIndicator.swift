@@ -6,13 +6,9 @@
 // Copyright (c) 2024 Jellyfin & Jellyfin Contributors
 //
 
-import Defaults
 import SwiftUI
 
 struct WatchedIndicator: View {
-
-    @Default(.accentColor)
-    private var accentColor
 
     let size: CGFloat
 
@@ -23,8 +19,7 @@ struct WatchedIndicator: View {
             Image(systemName: "checkmark.circle.fill")
                 .resizable()
                 .frame(width: size, height: size)
-                .symbolRenderingMode(.palette)
-                .foregroundStyle(.white, accentColor)
+                .paletteOverlayRendering(color: .white)
                 .padding(3)
         }
     }

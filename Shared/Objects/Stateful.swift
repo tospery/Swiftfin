@@ -16,7 +16,6 @@ import OrderedCollections
 //       parent class actions
 // TODO: official way for a cleaner `respond` method so it doesn't have all Task
 //       construction and get bloated
-// TODO: make Action: Hashable just for consistency
 
 protocol Stateful: AnyObject {
 
@@ -43,11 +42,6 @@ protocol Stateful: AnyObject {
 }
 
 extension Stateful {
-
-    var lastAction: Action? {
-        get { nil }
-        set {}
-    }
 
     @MainActor
     func send(_ action: Action) {

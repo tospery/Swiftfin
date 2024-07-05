@@ -7,55 +7,34 @@
 //
 
 import Foundation
-import JellyfinAPI
 import Stinsen
 import SwiftUI
 
 final class UserSignInCoordinator: NavigationCoordinatable {
 
-    struct SecurityParameters {
-        let pinHint: Binding<String>
-        let accessPolicy: Binding<UserAccessPolicy>
-    }
-
     let stack = NavigationStack(initial: \UserSignInCoordinator.start)
 
     @Root
     var start = makeStart
-
+    #if os(iOS)
     @Route(.modal)
     var quickConnect = makeQuickConnect
-
-    #if os(iOS)
-    @Route(.modal)
-    var security = makeSecurity
     #endif
 
-    private let server: ServerState
+    let viewModel: UserSignInViewModel
 
-    init(server: ServerState) {
-        self.server = server
-    }
-
-    func makeQuickConnect(quickConnect: QuickConnect) -> NavigationViewCoordinator<BasicNavigationViewCoordinator> {
-        NavigationViewCoordinator {
-            QuickConnectView(quickConnect: quickConnect)
-        }
+    init(viewModel: UserSignInViewModel) {
+        self.viewModel = viewModel
     }
 
     #if os(iOS)
-    func makeSecurity(parameters: SecurityParameters) -> NavigationViewCoordinator<BasicNavigationViewCoordinator> {
-        NavigationViewCoordinator {
-            UserSignInView.SecurityView(
-                pinHint: parameters.pinHint,
-                accessPolicy: parameters.accessPolicy
-            )
-        }
+    func makeQuickConnect() -> NavigationViewCoordinator<QuickConnectCoordinator> {
+        NavigationViewCoordinator(QuickConnectCoordinator(viewModel: viewModel))
     }
     #endif
 
     @ViewBuilder
     func makeStart() -> some View {
-        UserSignInView(server: server)
+        UserSignInView(viewModel: viewModel)
     }
 }

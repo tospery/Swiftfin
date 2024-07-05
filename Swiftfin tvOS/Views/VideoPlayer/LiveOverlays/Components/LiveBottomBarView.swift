@@ -106,7 +106,7 @@ extension LiveVideoPlayer.Overlay {
                         .foregroundColor(.white)
                 }
             }
-            .onChange(of: isPresentingOverlay) { _, newValue in
+            .onChange(of: isPresentingOverlay) { newValue in
                 guard newValue else { return }
             }
         }

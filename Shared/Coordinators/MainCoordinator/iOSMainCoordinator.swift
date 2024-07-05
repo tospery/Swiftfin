@@ -14,68 +14,39 @@ import JellyfinAPI
 import Nuke
 import Stinsen
 import SwiftUI
-
-// TODO: could possibly clean up
-//       - only go to loading if migrations necessary
-//       - account for other migrations (Defaults)
+import WidgetKit
 
 final class MainCoordinator: NavigationCoordinatable {
 
-    @Injected(\.logService)
+    @Injected(LogManager.service)
     private var logger
-
-    @Injected(\.currentUserSession)
-    private var userSession
 
     var stack: Stinsen.NavigationStack<MainCoordinator>
 
     @Root
-    var loading = makeLoading
-    @Root
     var mainTab = makeMainTab
     @Root
-    var selectUser = makeSelectUser
-    @Root
-    var serverCheck = makeServerCheck
-
-    @Route(.fullScreen)
-    var liveVideoPlayer = makeLiveVideoPlayer
-    @Route(.modal)
-    var settings = makeSettings
+    var serverList = makeServerList
     @Route(.fullScreen)
     var videoPlayer = makeVideoPlayer
+    @Route(.fullScreen)
+    var liveVideoPlayer = makeLiveVideoPlayer
+
+    private var cancellables = Set<AnyCancellable>()
 
     init() {
 
-        stack = NavigationStack(initial: \.loading)
-
-        Task {
-            do {
-                try await SwiftfinStore.setupDataStack()
-
-                if userSession != nil, !Defaults[.signOutOnClose] {
-                    await MainActor.run {
-                        withAnimation(.linear(duration: 0.1)) {
-                            let _ = root(\.serverCheck)
-                        }
-                    }
-                } else {
-                    await MainActor.run {
-                        withAnimation(.linear(duration: 0.1)) {
-                            let _ = root(\.selectUser)
-                        }
-                    }
-                }
-
-            } catch {
-                await MainActor.run {
-                    logger.critical("\(error.localizedDescription)")
-                    Notifications[.didFailMigration].post()
-                }
-            }
+        if Container.userSession().authenticated {
+            stack = NavigationStack(initial: \MainCoordinator.mainTab)
+        } else {
+            stack = NavigationStack(initial: \MainCoordinator.serverList)
         }
 
-        // TODO: move these to the App instead?
+        ImageCache.shared.costLimit = 125 * 1024 * 1024 // 125MB memory
+        DataLoader.sharedUrlCache.diskCapacity = 1000 * 1024 * 1024 // 1000MB disk
+
+        WidgetCenter.shared.reloadAllTimelines()
+        UIScrollView.appearance().keyboardDismissMode = .onDrag
 
         // Notification setup for state
         Notifications[.didSignIn].subscribe(self, selector: #selector(didSignIn))
@@ -84,24 +55,16 @@ final class MainCoordinator: NavigationCoordinatable {
         Notifications[.didChangeCurrentServerURL].subscribe(self, selector: #selector(didChangeCurrentServerURL(_:)))
     }
 
-    private func didFinishMigration() {}
-
     @objc
     func didSignIn() {
         logger.info("Signed in")
-
-        withAnimation(.linear(duration: 0.1)) {
-            let _ = root(\.serverCheck)
-        }
+        root(\.mainTab)
     }
 
     @objc
     func didSignOut() {
         logger.info("Signed out")
-
-        withAnimation(.linear(duration: 0.1)) {
-            let _ = root(\.selectUser)
-        }
+        root(\.serverList)
     }
 
     @objc
@@ -121,34 +84,18 @@ final class MainCoordinator: NavigationCoordinatable {
     @objc
     func didChangeCurrentServerURL(_ notification: Notification) {
 
-        guard userSession != nil else { return }
+        guard Container.userSession().authenticated else { return }
 
-        Container.shared.currentUserSession.reset()
+        Container.userSession.reset()
         Notifications[.didSignIn].post()
-    }
-
-    func makeLoading() -> NavigationViewCoordinator<BasicNavigationViewCoordinator> {
-        NavigationViewCoordinator {
-            AppLoadingView()
-        }
-    }
-
-    func makeSettings() -> NavigationViewCoordinator<SettingsCoordinator> {
-        NavigationViewCoordinator(SettingsCoordinator())
     }
 
     func makeMainTab() -> MainTabCoordinator {
         MainTabCoordinator()
     }
 
-    func makeSelectUser() -> NavigationViewCoordinator<SelectUserCoordinator> {
-        NavigationViewCoordinator(SelectUserCoordinator())
-    }
-
-    func makeServerCheck() -> NavigationViewCoordinator<BasicNavigationViewCoordinator> {
-        NavigationViewCoordinator {
-            ServerCheckView()
-        }
+    func makeServerList() -> NavigationViewCoordinator<ServerListCoordinator> {
+        NavigationViewCoordinator(ServerListCoordinator())
     }
 
     func makeVideoPlayer(manager: VideoPlayerManager) -> VideoPlayerCoordinator {

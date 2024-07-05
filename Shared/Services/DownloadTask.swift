@@ -38,10 +38,10 @@ class DownloadTask: NSObject, ObservableObject {
         case ready
     }
 
-    @Injected(\.logService)
+    @Injected(LogManager.service)
     private var logger
-    @Injected(\.currentUserSession)
-    private var userSession: UserSession!
+    @Injected(Container.userSession)
+    private var userSession
 
     @Published
     var state: State = .ready
@@ -80,7 +80,8 @@ class DownloadTask: NSObject, ObservableObject {
                 await MainActor.run {
                     self.state = .error(error)
 
-                    Container.shared.downloadManager.reset()
+                    Container.downloadManager()
+                        .remove(task: self)
                 }
                 return
             }
@@ -283,7 +284,8 @@ extension DownloadTask: URLSessionDownloadDelegate {
         DispatchQueue.main.async {
             self.state = .error(error)
 
-            Container.shared.downloadManager.reset()
+            Container.downloadManager()
+                .remove(task: self)
         }
     }
 
@@ -293,7 +295,8 @@ extension DownloadTask: URLSessionDownloadDelegate {
         DispatchQueue.main.async {
             self.state = .error(error)
 
-            Container.shared.downloadManager.reset()
+            Container.downloadManager()
+                .remove(task: self)
         }
     }
 }

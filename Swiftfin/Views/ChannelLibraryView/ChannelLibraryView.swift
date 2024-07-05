@@ -95,7 +95,6 @@ struct ChannelLibraryView: View {
             }
     }
 
-    @ViewBuilder
     private var contentView: some View {
         CollectionVGrid(
             $viewModel.elements,

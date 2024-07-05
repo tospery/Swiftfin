@@ -13,6 +13,9 @@ extension ItemView.AboutView {
 
     struct RatingsCard: View {
 
+        @EnvironmentObject
+        private var router: ItemCoordinator.Router
+
         let item: BaseItemDto
 
         var body: some View {

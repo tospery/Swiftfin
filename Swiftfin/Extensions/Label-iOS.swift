@@ -15,6 +15,13 @@ extension LabelStyle where Self == EpisodeSelectorLabelStyle {
     }
 }
 
+extension LabelStyle where Self == TrailingIconLabelStyle {
+
+    static var trailingIcon: TrailingIconLabelStyle {
+        TrailingIconLabelStyle()
+    }
+}
+
 struct EpisodeSelectorLabelStyle: LabelStyle {
 
     func makeBody(configuration: Configuration) -> some View {
@@ -33,5 +40,16 @@ struct EpisodeSelectorLabelStyle: LabelStyle {
         .compositingGroup()
         .shadow(radius: 1)
         .font(.caption)
+    }
+}
+
+struct TrailingIconLabelStyle: LabelStyle {
+
+    func makeBody(configuration: Configuration) -> some View {
+        HStack {
+            configuration.title
+
+            configuration.icon
+        }
     }
 }

@@ -11,7 +11,7 @@ import SwiftUI
 
 class DownloadListViewModel: ViewModel {
 
-    @Injected(\.downloadManager)
+    @Injected(Container.downloadManager)
     private var downloadManager
 
     @Published

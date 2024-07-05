@@ -7,6 +7,7 @@
 //
 
 import CollectionHStack
+import Introspect
 import JellyfinAPI
 import SwiftUI
 
@@ -46,7 +47,7 @@ struct SeriesEpisodeSelector: View {
                 selection = viewModel.seasons.first
             }
         }
-        .onChange(of: selection) { _, newValue in
+        .onChange(of: selection) { newValue in
             guard let newValue else { return }
 
             if newValue.state == .initial {
@@ -120,7 +121,7 @@ extension SeriesEpisodeSelector {
                     .frame(height: 20)
                 }
             }
-            .onChange(of: focusedSeason) { _, newValue in
+            .onChange(of: focusedSeason) { newValue in
                 guard let newValue else { return }
                 selection.wrappedValue = newValue
             }

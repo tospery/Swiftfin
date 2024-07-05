@@ -13,7 +13,7 @@ extension ItemView {
 
     struct PlayButton: View {
 
-        @Injected(\.logService)
+        @Injected(LogManager.service)
         private var logger
 
         @EnvironmentObject

@@ -9,8 +9,6 @@
 import Defaults
 import SwiftUI
 
-// TODO: will be entirely re-organized
-
 struct CustomizeViewsSettings: View {
 
     @Default(.Customization.itemViewType)
@@ -18,15 +16,14 @@ struct CustomizeViewsSettings: View {
     @Default(.Customization.CinematicItemViewType.usePrimaryImage)
     private var cinematicItemViewTypeUsePrimaryImage
 
+    @Default(.hapticFeedback)
+    private var hapticFeedback
+
     @Default(.Customization.shouldShowMissingSeasons)
     private var shouldShowMissingSeasons
     @Default(.Customization.shouldShowMissingEpisodes)
     private var shouldShowMissingEpisodes
 
-    @Default(.Customization.Library.letterPickerEnabled)
-    var letterPickerEnabled
-    @Default(.Customization.Library.letterPickerOrientation)
-    var letterPickerOrientation
     @Default(.Customization.Library.enabledDrawerFilters)
     private var libraryEnabledDrawerFilters
     @Default(.Customization.Search.enabledDrawerFilters)
@@ -38,25 +35,16 @@ struct CustomizeViewsSettings: View {
     private var nextUpPosterType
     @Default(.Customization.recentlyAddedPosterType)
     private var recentlyAddedPosterType
-    @Default(.Customization.showRecentlyAdded)
-    private var showRecentlyAdded
     @Default(.Customization.latestInLibraryPosterType)
     private var latestInLibraryPosterType
     @Default(.Customization.similarPosterType)
     private var similarPosterType
     @Default(.Customization.searchPosterType)
     private var searchPosterType
-    @Default(.Customization.Library.displayType)
-    private var libraryDisplayType
-    @Default(.Customization.Library.posterType)
-    private var libraryPosterType
+    @Default(.Customization.Library.viewType)
+    private var libraryViewType
     @Default(.Customization.Library.listColumnCount)
     private var listColumnCount
-
-    @Default(.Customization.Library.rememberLayout)
-    private var rememberLibraryLayout
-    @Default(.Customization.Library.rememberSort)
-    private var rememberLibrarySort
 
     @Default(.Customization.Episodes.useSeriesLandscapeBackdrop)
     private var useSeriesLandscapeBackdrop
@@ -74,7 +62,7 @@ struct CustomizeViewsSettings: View {
 
             if UIDevice.isPhone {
                 Section {
-                    CaseIterablePicker(L10n.items, selection: $itemViewType)
+                    CaseIterablePicker(title: L10n.items, selection: $itemViewType)
                 }
 
                 if itemViewType == .cinematic {
@@ -84,6 +72,8 @@ struct CustomizeViewsSettings: View {
                         L10n.usePrimaryImageDescription.text
                     }
                 }
+
+                Toggle(L10n.hapticFeedback, isOn: $hapticFeedback)
             }
 
             Section {
@@ -97,21 +87,12 @@ struct CustomizeViewsSettings: View {
 
             Section {
 
-                Toggle(L10n.letterPicker, isOn: $letterPickerEnabled)
-
-                if letterPickerEnabled {
-                    CaseIterablePicker(
-                        L10n.orientation,
-                        selection: $letterPickerOrientation
-                    )
-                }
-
-                ChevronButton(L10n.library)
+                ChevronButton(title: L10n.library)
                     .onSelect {
                         router.route(to: \.itemFilterDrawerSelector, $libraryEnabledDrawerFilters)
                     }
 
-                ChevronButton(L10n.search)
+                ChevronButton(title: L10n.search)
                     .onSelect {
                         router.route(to: \.itemFilterDrawerSelector, $searchEnabledDrawerFilters)
                     }
@@ -127,32 +108,29 @@ struct CustomizeViewsSettings: View {
                 L10n.missingItems.text
             }
 
-            Section(L10n.posters) {
+            Section {
 
-                ChevronButton(L10n.indicators)
+                ChevronButton(title: L10n.indicators)
                     .onSelect {
                         router.route(to: \.indicatorSettings)
                     }
 
                 Toggle(L10n.showPosterLabels, isOn: $showPosterLabels)
 
-                CaseIterablePicker(L10n.next, selection: $nextUpPosterType)
+                CaseIterablePicker(title: L10n.next, selection: $nextUpPosterType)
 
-                CaseIterablePicker(L10n.recentlyAdded, selection: $recentlyAddedPosterType)
+                CaseIterablePicker(title: L10n.recentlyAdded, selection: $recentlyAddedPosterType)
 
-                CaseIterablePicker(L10n.latestWithString(L10n.library), selection: $latestInLibraryPosterType)
+                CaseIterablePicker(title: L10n.latestWithString(L10n.library), selection: $latestInLibraryPosterType)
 
-                CaseIterablePicker(L10n.recommended, selection: $similarPosterType)
+                CaseIterablePicker(title: L10n.recommended, selection: $similarPosterType)
 
-                CaseIterablePicker(L10n.search, selection: $searchPosterType)
-            }
+                CaseIterablePicker(title: L10n.search, selection: $searchPosterType)
 
-            Section("Libraries") {
-                CaseIterablePicker(L10n.library, selection: $libraryDisplayType)
+                // TODO: figure out how we can do the same Menu as the library menu picker?
+                CaseIterablePicker(title: L10n.library, selection: $libraryViewType)
 
-                CaseIterablePicker(L10n.posters, selection: $libraryPosterType)
-
-                if libraryDisplayType == .list, UIDevice.isPad {
+                if libraryViewType == .list, UIDevice.isPad {
                     BasicStepper(
                         title: "Columns",
                         value: $listColumnCount,
@@ -160,22 +138,9 @@ struct CustomizeViewsSettings: View {
                         step: 1
                     )
                 }
-            }
 
-            Section("Home") {
-                Toggle("Show recently added", isOn: $showRecentlyAdded)
-            }
-
-            Section {
-                Toggle("Remember layout", isOn: $rememberLibraryLayout)
-            } footer: {
-                Text("Remember layout for individual libraries")
-            }
-
-            Section {
-                Toggle("Remember sorting", isOn: $rememberLibrarySort)
-            } footer: {
-                Text("Remember sorting for individual libraries")
+            } header: {
+                L10n.posters.text
             }
 
             Section {

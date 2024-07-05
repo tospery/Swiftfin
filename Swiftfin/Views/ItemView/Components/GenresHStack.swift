@@ -23,11 +23,7 @@ extension ItemView {
                 title: L10n.genres,
                 items: genres
             ).onSelect { genre in
-                let viewModel = ItemLibraryViewModel(
-                    title: genre.displayTitle,
-                    id: genre.value,
-                    filters: .init(genres: [genre])
-                )
+                let viewModel = ItemLibraryViewModel(title: genre.displayTitle, filters: .init(genres: [genre]))
                 router.route(to: \.library, viewModel)
             }
         }

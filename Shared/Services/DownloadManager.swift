@@ -12,12 +12,17 @@ import Foundation
 import JellyfinAPI
 
 extension Container {
-    var downloadManager: Factory<DownloadManager> { self { DownloadManager() }.shared }
+
+    static let downloadManager = Factory(scope: .singleton) {
+        let manager = DownloadManager()
+        manager.clearTmp()
+        return manager
+    }
 }
 
 class DownloadManager: ObservableObject {
 
-    @Injected(\.logService)
+    @Injected(LogManager.service)
     private var logger
 
     @Published

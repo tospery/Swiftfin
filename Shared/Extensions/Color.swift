@@ -8,9 +8,6 @@
 
 import SwiftUI
 
-// TODO: add all other missing colors from UIColor and fix usages
-//       - move row dividers to divider color
-
 extension Color {
 
     static let jellyfinPurple = Color(uiColor: .jellyfinPurple)
@@ -29,13 +26,9 @@ extension Color {
     static let secondarySystemFill = Color(UIColor.gray)
     static let tertiarySystemFill = Color(UIColor.black)
     static let lightGray = Color(UIColor.lightGray)
-
     #else
-    static let systemBackground = Color(UIColor.systemBackground)
-    static let secondarySystemBackground = Color(UIColor.secondarySystemBackground)
-    static let tertiarySystemBackground = Color(UIColor.tertiarySystemBackground)
-
     static let systemFill = Color(UIColor.systemFill)
+    static let systemBackground = Color(UIColor.systemBackground)
     static let secondarySystemFill = Color(UIColor.secondarySystemFill)
     static let tertiarySystemFill = Color(UIColor.tertiarySystemFill)
     #endif

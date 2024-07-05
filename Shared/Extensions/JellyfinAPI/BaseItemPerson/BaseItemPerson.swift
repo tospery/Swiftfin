@@ -12,7 +12,7 @@ import UIKit
 
 extension BaseItemPerson: Displayable {
     var displayTitle: String {
-        name ?? .emptyDash
+        self.name ?? .emptyDash
     }
 }
 

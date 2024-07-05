@@ -19,19 +19,15 @@ final class SettingsCoordinator: NavigationCoordinatable {
 
     #if os(iOS)
     @Route(.push)
+    var about = makeAbout
+    @Route(.push)
+    var appIconSelector = makeAppIconSelector
+    @Route(.push)
     var log = makeLog
     @Route(.push)
     var nativePlayerSettings = makeNativePlayerSettings
     @Route(.push)
-    var quickConnect = makeQuickConnectAuthorize
-    @Route(.push)
-    var resetUserPassword = makeResetUserPassword
-    @Route(.push)
-    var localSecurity = makeLocalSecurity
-    @Route(.modal)
-    var photoPicker = makePhotoPicker
-    @Route(.push)
-    var userProfile = makeUserProfileSettings
+    var quickConnect = makeQuickConnectSettings
 
     @Route(.push)
     var customizeViewsSettings = makeCustomizeViewsSettings
@@ -67,34 +63,31 @@ final class SettingsCoordinator: NavigationCoordinatable {
     var videoPlayerSettings = makeVideoPlayerSettings
     #endif
 
+    private let viewModel: SettingsViewModel
+
+    init() {
+        viewModel = .init()
+    }
+
     #if os(iOS)
+    @ViewBuilder
+    func makeAbout() -> some View {
+        AboutAppView(viewModel: viewModel)
+    }
+
+    @ViewBuilder
+    func makeAppIconSelector() -> some View {
+        AppIconSelectorView(viewModel: viewModel)
+    }
+
     @ViewBuilder
     func makeNativePlayerSettings() -> some View {
         NativeVideoPlayerSettingsView()
     }
 
     @ViewBuilder
-    func makeQuickConnectAuthorize() -> some View {
-        QuickConnectAuthorizeView()
-    }
-
-    @ViewBuilder
-    func makeResetUserPassword() -> some View {
-        ResetUserPasswordView()
-    }
-
-    @ViewBuilder
-    func makeLocalSecurity() -> some View {
-        UserLocalSecurityView()
-    }
-
-    func makePhotoPicker(viewModel: SettingsViewModel) -> NavigationViewCoordinator<UserProfileImageCoordinator> {
-        NavigationViewCoordinator(UserProfileImageCoordinator())
-    }
-
-    @ViewBuilder
-    func makeUserProfileSettings(viewModel: SettingsViewModel) -> some View {
-        UserProfileSettingsView(viewModel: viewModel)
+    func makeQuickConnectSettings() -> some View {
+        QuickConnectSettingsView(viewModel: .init())
     }
 
     @ViewBuilder
@@ -114,7 +107,7 @@ final class SettingsCoordinator: NavigationCoordinatable {
 
     @ViewBuilder
     func makeServerDetail(server: ServerState) -> some View {
-        EditServerView(server: server)
+        ServerDetailView(server: server)
     }
 
     #if DEBUG
@@ -152,15 +145,19 @@ final class SettingsCoordinator: NavigationCoordinatable {
     }
 
     func makeIndicatorSettings() -> NavigationViewCoordinator<BasicNavigationViewCoordinator> {
-        NavigationViewCoordinator {
-            IndicatorSettingsView()
-        }
+        NavigationViewCoordinator(
+            BasicNavigationViewCoordinator {
+                IndicatorSettingsView()
+            }
+        )
     }
 
     func makeServerDetail(server: ServerState) -> NavigationViewCoordinator<BasicNavigationViewCoordinator> {
-        NavigationViewCoordinator {
-            EditServerView(server: server)
-        }
+        NavigationViewCoordinator(
+            BasicNavigationViewCoordinator {
+                ServerDetailView(server: server)
+            }
+        )
     }
 
     func makeVideoPlayerSettings() -> NavigationViewCoordinator<VideoPlayerSettingsCoordinator> {
@@ -175,6 +172,6 @@ final class SettingsCoordinator: NavigationCoordinatable {
 
     @ViewBuilder
     func makeStart() -> some View {
-        SettingsView()
+        SettingsView(viewModel: viewModel)
     }
 }

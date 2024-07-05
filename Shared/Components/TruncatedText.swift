@@ -11,8 +11,6 @@ import SwiftUI
 
 // TODO: only allow `view` selection when truncated?
 // TODO: fix when also using `lineLimit(reserveSpace > 1)`
-// TODO: some false positives for showing see more?
-// TODO: allow removing empty lines
 
 struct TruncatedText: View {
 
@@ -35,7 +33,6 @@ struct TruncatedText: View {
     private var seeMoreType: SeeMoreType
     private let text: String
 
-    @ViewBuilder
     private var textView: some View {
         ZStack(alignment: .bottomTrailing) {
             Text(text)

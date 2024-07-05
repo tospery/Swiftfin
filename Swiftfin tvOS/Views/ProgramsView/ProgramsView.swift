@@ -21,7 +21,6 @@ struct ProgramsView: View {
     @StateObject
     private var programsViewModel = ProgramsViewModel()
 
-    @ViewBuilder
     private var contentView: some View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 20) {

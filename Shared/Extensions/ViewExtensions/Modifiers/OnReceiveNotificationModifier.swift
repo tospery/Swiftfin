@@ -11,12 +11,12 @@ import SwiftUI
 struct OnReceiveNotificationModifier: ViewModifier {
 
     let notification: NSNotification.Name
-    let onReceive: (Notification) -> Void
+    let onReceive: () -> Void
 
     func body(content: Content) -> some View {
         content
-            .onReceive(NotificationCenter.default.publisher(for: notification)) {
-                onReceive($0)
+            .onReceive(NotificationCenter.default.publisher(for: notification)) { _ in
+                onReceive()
             }
     }
 }

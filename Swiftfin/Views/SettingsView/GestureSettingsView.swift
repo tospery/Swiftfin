@@ -38,23 +38,23 @@ struct GestureSettingsView: View {
 
             Section {
 
-                CaseIterablePicker("Horizontal Pan", selection: $horizontalPanGesture)
+                CaseIterablePicker(title: "Horizontal Pan", selection: $horizontalPanGesture)
                     .disabled(horizontalSwipeGesture != .none && horizontalPanGesture == .none)
 
-                CaseIterablePicker("Horizontal Swipe", selection: $horizontalSwipeGesture)
+                CaseIterablePicker(title: "Horizontal Swipe", selection: $horizontalSwipeGesture)
                     .disabled(horizontalPanGesture != .none && horizontalSwipeGesture == .none)
 
-                CaseIterablePicker("Long Press", selection: $longPressGesture)
+                CaseIterablePicker(title: "Long Press", selection: $longPressGesture)
 
-                CaseIterablePicker("Multi Tap", selection: $multiTapGesture)
+                CaseIterablePicker(title: "Multi Tap", selection: $multiTapGesture)
 
-                CaseIterablePicker("Double Touch", selection: $doubleTouchGesture)
+                CaseIterablePicker(title: "Double Touch", selection: $doubleTouchGesture)
 
-                CaseIterablePicker("Pinch", selection: $pinchGesture)
+                CaseIterablePicker(title: "Pinch", selection: $pinchGesture)
 
-                CaseIterablePicker("Left Vertical Pan", selection: $verticalPanGestureLeft)
+                CaseIterablePicker(title: "Left Vertical Pan", selection: $verticalPanGestureLeft)
 
-                CaseIterablePicker("Right Vertical Pan", selection: $verticalPanGestureRight)
+                CaseIterablePicker(title: "Right Vertical Pan", selection: $verticalPanGestureRight)
             }
         }
         .navigationTitle("Gestures")

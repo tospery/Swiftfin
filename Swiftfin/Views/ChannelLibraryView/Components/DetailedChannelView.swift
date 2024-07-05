@@ -32,7 +32,6 @@ extension ChannelLibraryView {
         private var onSelect: () -> Void
         private let timer = Timer.publish(every: 5, on: .main, in: .common).autoconnect()
 
-        @ViewBuilder
         private var channelLogo: some View {
             VStack {
                 ZStack {
@@ -45,8 +44,9 @@ extension ChannelLibraryView {
                             $0.aspectRatio(contentMode: .fit)
                         }
                         .failure {
-                            SystemImageContentView(systemName: channel.systemImage, ratio: 0.5)
+                            SystemImageContentView(systemName: channel.systemImage)
                                 .background(color: .clear)
+                                .imageFrameRatio(width: 2, height: 2)
                         }
                         .placeholder { _ in
                             EmptyView()

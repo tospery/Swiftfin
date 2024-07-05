@@ -7,6 +7,7 @@
 //
 
 import Defaults
+import Introspect
 import JellyfinAPI
 import SwiftUI
 

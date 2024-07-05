@@ -28,7 +28,7 @@ struct CustomizeViewsSettings: View {
     private var similarPosterType
     @Default(.Customization.searchPosterType)
     private var searchPosterType
-    @Default(.Customization.Library.displayType)
+    @Default(.Customization.Library.viewType)
     private var libraryViewType
 
     @Default(.Customization.Library.cinematicBackground)
@@ -37,8 +37,6 @@ struct CustomizeViewsSettings: View {
     private var libraryRandomImage
     @Default(.Customization.Library.showFavorites)
     private var showFavorites
-    @Default(.Customization.showRecentlyAdded)
-    private var showRecentlyAdded
 
     @EnvironmentObject
     private var router: SettingsCoordinator.Router
@@ -64,7 +62,7 @@ struct CustomizeViewsSettings: View {
 
                 Section {
 
-                    ChevronButton("Indicators")
+                    ChevronButton(title: "Indicators")
                         .onSelect {
                             router.route(to: \.indicatorSettings)
                         }
@@ -94,9 +92,6 @@ struct CustomizeViewsSettings: View {
                     Toggle("Random Image", isOn: $libraryRandomImage)
 
                     Toggle("Show Favorites", isOn: $showFavorites)
-
-                    Toggle("Show Recently Added", isOn: $showRecentlyAdded)
-
                 } header: {
                     L10n.library.text
                 }

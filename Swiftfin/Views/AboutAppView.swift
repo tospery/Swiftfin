@@ -10,20 +10,25 @@ import SwiftUI
 
 struct AboutAppView: View {
 
+    @EnvironmentObject
+    private var router: SettingsCoordinator.Router
+
     @ObservedObject
     var viewModel: SettingsViewModel
 
     var body: some View {
         List {
             Section {
-                VStack(alignment: .center, spacing: 10) {
+                VStack(alignment: .center) {
 
-                    Image(.jellyfinBlobBlue)
+                    Image(uiImage: viewModel.currentAppIcon.iconPreview)
                         .resizable()
-                        .aspectRatio(1, contentMode: .fit)
-                        .frame(height: 150)
+                        .frame(width: 150, height: 150)
+                        .cornerRadius(150 / 6.4)
+                        .shadow(radius: 5)
 
-                    Text(verbatim: "Swiftfin")
+                    // App name, not to be localized
+                    Text("Swiftfin")
                         .fontWeight(.semibold)
                         .font(.title2)
                 }
@@ -38,38 +43,33 @@ struct AboutAppView: View {
                     trailing: "\(UIApplication.appVersion ?? .emptyDash) (\(UIApplication.bundleVersion ?? .emptyDash))"
                 )
 
-                ChevronButton(L10n.sourceCode)
+                ChevronButton(title: L10n.sourceCode)
                     .leadingView {
                         Image(.logoGithub)
                             .resizable()
-                            .aspectRatio(1, contentMode: .fit)
-                            .frame(width: 24, height: 24)
+                            .frame(width: 20, height: 20)
                             .foregroundColor(.primary)
                     }
                     .onSelect {
                         UIApplication.shared.open(.swiftfinGithub)
                     }
 
-                ChevronButton(L10n.bugsAndFeatures)
+                ChevronButton(title: L10n.bugsAndFeatures)
                     .leadingView {
                         Image(systemName: "plus.circle.fill")
                             .resizable()
-                            .backport
-                            .fontWeight(.bold)
-                            .aspectRatio(1, contentMode: .fit)
-                            .frame(width: 24, height: 24)
+                            .frame(width: 20, height: 20)
                             .foregroundColor(.primary)
                     }
                     .onSelect {
                         UIApplication.shared.open(.swiftfinGithubIssues)
                     }
 
-                ChevronButton(L10n.settings)
+                ChevronButton(title: L10n.settings)
                     .leadingView {
                         Image(systemName: "gearshape.fill")
                             .resizable()
-                            .aspectRatio(1, contentMode: .fit)
-                            .frame(width: 24, height: 24)
+                            .frame(width: 20, height: 20)
                             .foregroundColor(.primary)
                     }
                     .onSelect {

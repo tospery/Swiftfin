@@ -85,6 +85,20 @@ extension BaseItemDto {
         return formatter.string(from: .init(remainingSeconds))
     }
 
+    func getLiveStartTimeString(formatter: DateFormatter) -> String {
+        if let startDate = self.startDate {
+            return formatter.string(from: startDate)
+        }
+        return " "
+    }
+
+    func getLiveEndTimeString(formatter: DateFormatter) -> String {
+        if let endDate = self.endDate {
+            return formatter.string(from: endDate)
+        }
+        return " "
+    }
+
     var programDuration: TimeInterval? {
         guard let startDate, let endDate else { return nil }
         return endDate.timeIntervalSince(startDate)
@@ -160,10 +174,7 @@ extension BaseItemDto {
     }
 
     var hasRatings: Bool {
-        [
-            criticRating,
-            communityRating,
-        ].contains { $0 != nil }
+        [criticRating, communityRating].oneSatisfies { $0 != nil }
     }
 
     // MARK: Chapter Images
@@ -193,7 +204,8 @@ extension BaseItemDto {
                     parameters: parameters
                 )
 
-                let imageURL = Container.shared.currentUserSession()!
+                let imageURL = Container
+                    .userSession()
                     .client
                     .fullURL(with: request)
 

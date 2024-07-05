@@ -14,61 +14,31 @@ import SwiftUI
 // TODO: need to think about better design for views that may not support current library display type
 //       - ex: channels/albums when in portrait/landscape
 //       - just have the supported view embedded in a container view?
-// TODO: could bottom (defaults + stored) `onChange` copies be cleaned up?
-//       - more could be cleaned up if there was a "switcher" property wrapper that takes two
-//         sources and a switch and holds the current expected value
-//       - or if Defaults values were moved to StoredValues and each key would return/respond to
-//         what values they should have
-// TODO: when there are no filters sometimes navigation bar will be clear until popped back to
 
-/*
- Note: Currently, it is a conscious decision to not have grid posters have subtitle content.
-       This is due to episodes, which have their `S_E_` subtitles, and these can be alongside
-       other items that don't have a subtitle which requires the entire library to implement
-       subtitle content but that doesn't look appealing. Until a solution arrives grid posters
-       will not have subtitle content.
-       There should be a solution since there are contexts where subtitles are desirable and/or
-       we can have subtitle content for other items.
-
- Note: For `rememberLayout` and `rememberSort`, there are quirks for observing changes while a
-       library is open and the setting has been changed. For simplicity, do not enforce observing
-       changes and doing proper updates since there is complexitry with what "actual" settings
-       should be applied.
- */
+// Note: Currently, it is a conscious decision to not have grid posters have subtitle content.
+//       This is due to episodes, which have their `S_E_` subtitles, and these can be alongside
+//       other items that don't have a subtitle which requires the entire library to implement
+//       subtitle content but that doesn't look appealing. Until a solution arrives grid posters
+//       will not have subtitle content.
+//       There should be a solution since there are contexts where subtitles are desirable and/or
+//       we can have subtitle content for other items.
 
 struct PagingLibraryView<Element: Poster>: View {
 
     @Default(.Customization.Library.enabledDrawerFilters)
     private var enabledDrawerFilters
-    @Default(.Customization.Library.rememberLayout)
-    private var rememberLayout
-
-    @Default
-    private var defaultDisplayType: LibraryDisplayType
-    @Default
-    private var defaultListColumnCount: Int
-    @Default
-    private var defaultPosterType: PosterDisplayType
-
-    @Default(.Customization.Library.letterPickerEnabled)
-    private var letterPickerEnabled
-    @Default(.Customization.Library.letterPickerOrientation)
-    private var letterPickerOrientation
+    @Default(.Customization.Library.listColumnCount)
+    private var listColumnCount
+    @Default(.Customization.Library.posterType)
+    private var posterType
+    @Default(.Customization.Library.viewType)
+    private var viewType
 
     @EnvironmentObject
     private var router: LibraryCoordinator<Element>.Router
 
     @State
     private var layout: CollectionVGridLayout
-    @State
-    private var safeArea: EdgeInsets = .zero
-
-    @StoredValue
-    private var displayType: LibraryDisplayType
-    @StoredValue
-    private var listColumnCount: Int
-    @StoredValue
-    private var posterType: PosterDisplayType
 
     @StateObject
     private var collectionVGridProxy: CollectionVGridProxy<Element> = .init()
@@ -78,34 +48,21 @@ struct PagingLibraryView<Element: Poster>: View {
     // MARK: init
 
     init(viewModel: PagingLibraryViewModel<Element>) {
-
-        // have to set these properties manually to get proper initial layout
-
-        self._defaultDisplayType = Default(.Customization.Library.displayType)
-        self._defaultListColumnCount = Default(.Customization.Library.listColumnCount)
-        self._defaultPosterType = Default(.Customization.Library.posterType)
-
-        self._displayType = StoredValue(.User.libraryDisplayType(parentID: viewModel.parent?.id))
-        self._listColumnCount = StoredValue(.User.libraryListColumnCount(parentID: viewModel.parent?.id))
-        self._posterType = StoredValue(.User.libraryPosterType(parentID: viewModel.parent?.id))
-
         self._viewModel = StateObject(wrappedValue: viewModel)
 
-        let initialDisplayType = Defaults[.Customization.Library.rememberLayout] ? _displayType.wrappedValue : _defaultDisplayType
-            .wrappedValue
-        let initialListColumnCount = Defaults[.Customization.Library.rememberLayout] ? _listColumnCount
-            .wrappedValue : _defaultListColumnCount.wrappedValue
-        let initialPosterType = Defaults[.Customization.Library.rememberLayout] ? _posterType.wrappedValue : _defaultPosterType.wrappedValue
+        let initialPosterType = Defaults[.Customization.Library.posterType]
+        let initialViewType = Defaults[.Customization.Library.viewType]
+        let initialListColumnCount = Defaults[.Customization.Library.listColumnCount]
 
         if UIDevice.isPhone {
             layout = Self.phoneLayout(
                 posterType: initialPosterType,
-                viewType: initialDisplayType
+                viewType: initialViewType
             )
         } else {
             layout = Self.padLayout(
                 posterType: initialPosterType,
-                viewType: initialDisplayType,
+                viewType: initialViewType,
                 listColumnCount: initialListColumnCount
             )
         }
@@ -144,8 +101,6 @@ struct PagingLibraryView<Element: Poster>: View {
 
     // MARK: layout
 
-    // TODO: rename old "viewType" paramter to "displayType" and sort
-
     private static func padLayout(
         posterType: PosterDisplayType,
         viewType: LibraryDisplayType,
@@ -180,7 +135,6 @@ struct PagingLibraryView<Element: Poster>: View {
     // Note: if parent is a folders then other items will have labels,
     //       so an empty content view is necessary
 
-    @ViewBuilder
     private func landscapeGridItemView(item: Element) -> some View {
         PosterButton(item: item, type: .landscape)
             .content {
@@ -200,7 +154,6 @@ struct PagingLibraryView<Element: Poster>: View {
             }
     }
 
-    @ViewBuilder
     private func portraitGridItemView(item: Element) -> some View {
         PosterButton(item: item, type: .portrait)
             .content {
@@ -220,15 +173,13 @@ struct PagingLibraryView<Element: Poster>: View {
             }
     }
 
-    @ViewBuilder
-    private func listItemView(item: Element, posterType: PosterDisplayType) -> some View {
+    private func listItemView(item: Element) -> some View {
         LibraryRow(item: item, posterType: posterType)
             .onSelect {
                 onSelect(item)
             }
     }
 
-    @ViewBuilder
     private func errorView(with error: some Error) -> some View {
         ErrorView(error: error)
             .onRetry {
@@ -236,87 +187,45 @@ struct PagingLibraryView<Element: Poster>: View {
             }
     }
 
-    @ViewBuilder
-    private var gridView: some View {
+    private var contentView: some View {
         CollectionVGrid(
             $viewModel.elements,
             layout: $layout
         ) { item in
-
-            let displayType = Defaults[.Customization.Library.rememberLayout] ? _displayType.wrappedValue : _defaultDisplayType
-                .wrappedValue
-            let posterType = Defaults[.Customization.Library.rememberLayout] ? _posterType.wrappedValue : _defaultPosterType.wrappedValue
-
-            switch (posterType, displayType) {
+            switch (posterType, viewType) {
             case (.landscape, .grid):
                 landscapeGridItemView(item: item)
             case (.portrait, .grid):
                 portraitGridItemView(item: item)
             case (_, .list):
-                listItemView(item: item, posterType: posterType)
+                listItemView(item: item)
             }
         }
         .onReachedBottomEdge(offset: .offset(300)) {
             viewModel.send(.getNextPage)
         }
         .proxy(collectionVGridProxy)
-        .scrollIndicatorsVisible(false)
-    }
-
-    @ViewBuilder
-    private var innerContent: some View {
-        switch viewModel.state {
-        case .content:
-            if viewModel.elements.isEmpty {
-                L10n.noResults.text
-            } else {
-                gridView
-            }
-        case .initial, .refreshing:
-            DelayedProgressView()
-        default:
-            AssertionFailureView("Expected view for unexpected state")
-        }
-    }
-
-    @ViewBuilder
-    private var contentView: some View {
-        if letterPickerEnabled, let filterViewModel = viewModel.filterViewModel {
-            ZStack(alignment: letterPickerOrientation.alignment) {
-                innerContent
-                    .padding(letterPickerOrientation.edge, 35)
-                    .frame(maxWidth: .infinity)
-
-                LetterPickerBar(viewModel: filterViewModel)
-                    .padding(.top, safeArea.top)
-                    .padding(.bottom, safeArea.bottom)
-                    .padding(letterPickerOrientation.edge, 10)
-            }
-        } else {
-            innerContent
-        }
     }
 
     // MARK: body
 
-    // TODO: becoming too large for typechecker during development, should break up somehow
-
     var body: some View {
-        ZStack {
-            Color.clear
-
+        WrappedView {
             switch viewModel.state {
-            case .content, .initial, .refreshing:
-                contentView
+            case .content:
+                if viewModel.elements.isEmpty {
+                    L10n.noResults.text
+                } else {
+                    contentView
+                }
             case let .error(error):
                 errorView(with: error)
+            case .initial, .refreshing:
+                DelayedProgressView()
             }
         }
-        .animation(.linear(duration: 0.1), value: viewModel.state)
+        .transition(.opacity.animation(.linear(duration: 0.2)))
         .ignoresSafeArea()
-        .onSizeChanged { _, safeArea in
-            self.safeArea = safeArea
-        }
         .navigationTitle(viewModel.parent?.displayTitle ?? "")
         .navigationBarTitleDisplayMode(.inline)
         .ifLet(viewModel.filterViewModel) { view, filterViewModel in
@@ -327,58 +236,29 @@ struct PagingLibraryView<Element: Poster>: View {
                 router.route(to: \.filter, $0)
             }
         }
-        .onChange(of: defaultDisplayType) { newValue in
-            guard !Defaults[.Customization.Library.rememberLayout] else { return }
-
+        .onChange(of: posterType) { newValue in
             if UIDevice.isPhone {
-                layout = Self.phoneLayout(
-                    posterType: defaultPosterType,
-                    viewType: newValue
-                )
-            } else {
-                layout = Self.padLayout(
-                    posterType: defaultPosterType,
-                    viewType: newValue,
-                    listColumnCount: defaultListColumnCount
-                )
-            }
-        }
-        .onChange(of: defaultListColumnCount) { newValue in
-            guard !Defaults[.Customization.Library.rememberLayout] else { return }
-
-            if UIDevice.isPad {
-                layout = Self.padLayout(
-                    posterType: defaultPosterType,
-                    viewType: defaultDisplayType,
-                    listColumnCount: newValue
-                )
-            }
-        }
-        .onChange(of: defaultPosterType) { newValue in
-            guard !Defaults[.Customization.Library.rememberLayout] else { return }
-
-            if UIDevice.isPhone {
-                if defaultDisplayType == .list {
+                if viewType == .list {
                     collectionVGridProxy.layout()
                 } else {
                     layout = Self.phoneLayout(
                         posterType: newValue,
-                        viewType: defaultDisplayType
+                        viewType: viewType
                     )
                 }
             } else {
-                if defaultDisplayType == .list {
+                if viewType == .list {
                     collectionVGridProxy.layout()
                 } else {
                     layout = Self.padLayout(
                         posterType: newValue,
-                        viewType: defaultDisplayType,
-                        listColumnCount: defaultListColumnCount
+                        viewType: viewType,
+                        listColumnCount: listColumnCount
                     )
                 }
             }
         }
-        .onChange(of: displayType) { newValue in
+        .onChange(of: viewType) { newValue in
             if UIDevice.isPhone {
                 layout = Self.phoneLayout(
                     posterType: posterType,
@@ -396,60 +276,9 @@ struct PagingLibraryView<Element: Poster>: View {
             if UIDevice.isPad {
                 layout = Self.padLayout(
                     posterType: posterType,
-                    viewType: displayType,
+                    viewType: viewType,
                     listColumnCount: newValue
                 )
-            }
-        }
-        .onChange(of: posterType) { newValue in
-            if UIDevice.isPhone {
-                if displayType == .list {
-                    collectionVGridProxy.layout()
-                } else {
-                    layout = Self.phoneLayout(
-                        posterType: newValue,
-                        viewType: displayType
-                    )
-                }
-            } else {
-                if displayType == .list {
-                    collectionVGridProxy.layout()
-                } else {
-                    layout = Self.padLayout(
-                        posterType: newValue,
-                        viewType: displayType,
-                        listColumnCount: listColumnCount
-                    )
-                }
-            }
-        }
-        .onChange(of: rememberLayout) { newValue in
-            let newDisplayType = newValue ? displayType : defaultDisplayType
-            let newListColumnCount = newValue ? listColumnCount : defaultListColumnCount
-            let newPosterType = newValue ? posterType : defaultPosterType
-
-            if UIDevice.isPhone {
-                layout = Self.phoneLayout(
-                    posterType: newPosterType,
-                    viewType: newDisplayType
-                )
-            } else {
-                layout = Self.padLayout(
-                    posterType: newPosterType,
-                    viewType: newDisplayType,
-                    listColumnCount: newListColumnCount
-                )
-            }
-        }
-        .onChange(of: viewModel.filterViewModel?.currentFilters) { newValue in
-            guard let newValue, let id = viewModel.parent?.id else { return }
-
-            if Defaults[.Customization.Library.rememberSort] {
-                let newStoredFilters = StoredValues[.User.libraryFilters(parentID: id)]
-                    .mutating(\.sortBy, with: newValue.sortBy)
-                    .mutating(\.sortOrder, with: newValue.sortOrder)
-
-                StoredValues[.User.libraryFilters(parentID: id)] = newStoredFilters
             }
         }
         .onReceive(viewModel.events) { event in
@@ -479,19 +308,11 @@ struct PagingLibraryView<Element: Poster>: View {
 
             Menu {
 
-                if Defaults[.Customization.Library.rememberLayout] {
-                    LibraryViewTypeToggle(
-                        posterType: $posterType,
-                        viewType: $displayType,
-                        listColumnCount: $listColumnCount
-                    )
-                } else {
-                    LibraryViewTypeToggle(
-                        posterType: $defaultPosterType,
-                        viewType: $defaultDisplayType,
-                        listColumnCount: $defaultListColumnCount
-                    )
-                }
+                LibraryViewTypeToggle(
+                    posterType: $posterType,
+                    viewType: $viewType,
+                    listColumnCount: $listColumnCount
+                )
 
                 Button(L10n.random, systemImage: "dice.fill") {
                     viewModel.send(.getRandomItem)

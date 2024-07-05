@@ -13,6 +13,9 @@ extension iPadOSMovieItemView {
 
     struct ContentView: View {
 
+        @EnvironmentObject
+        private var router: ItemCoordinator.Router
+
         @ObservedObject
         var viewModel: MovieItemViewModel
 

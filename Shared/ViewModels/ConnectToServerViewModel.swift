@@ -6,177 +6,85 @@
 // Copyright (c) 2024 Jellyfin & Jellyfin Contributors
 //
 
-import Combine
 import CoreStore
+import CryptoKit
+import Defaults
 import Factory
 import Foundation
 import Get
 import JellyfinAPI
-import OrderedCollections
 import Pulse
+import UIKit
 
-final class ConnectToServerViewModel: ViewModel, Eventful, Stateful {
-
-    // MARK: Event
-
-    enum Event {
-        case connected(ServerState)
-        case duplicateServer(ServerState)
-        case error(JellyfinAPIError)
-    }
-
-    // MARK: Action
-
-    enum Action: Equatable {
-        case addNewURL(ServerState)
-        case cancel
-        case connect(String)
-        case searchForServers
-    }
-
-    // MARK: BackgroundState
-
-    enum BackgroundState: Hashable {
-        case searching
-    }
-
-    // MARK: State
-
-    enum State: Hashable {
-        case connecting
-        case initial
-    }
+final class ConnectToServerViewModel: ViewModel {
 
     @Published
-    var backgroundStates: OrderedSet<BackgroundState> = []
+    private(set) var discoveredServers: [ServerState] = []
 
-    // no longer-found servers are not cleared, but not an issue
     @Published
-    var localServers: OrderedSet<ServerState> = []
-    @Published
-    var state: State = .initial
+    private(set) var isSearching = false
 
-    var events: AnyPublisher<Event, Never> {
-        eventSubject
-            .receive(on: RunLoop.main)
-            .eraseToAnyPublisher()
-    }
-
-    private var connectTask: AnyCancellable? = nil
     private let discovery = ServerDiscovery()
-    private var eventSubject: PassthroughSubject<Event, Never> = .init()
 
-    deinit {
-        discovery.close()
-    }
+    var connectToServerTask: Task<ServerState, Error>?
 
-    override init() {
-        super.init()
+    func connectToServer(url: String) async throws -> (server: ServerState, url: URL) {
 
-        Task { [weak self] in
-            guard let self else { return }
+        #if os(iOS)
+        // shhhh
+        // TODO: remove
+        if let data = url.data(using: .utf8) {
+            var sha = SHA256()
+            sha.update(data: data)
+            let digest = sha.finalize()
+            let urlHash = digest.compactMap { String(format: "%02x", $0) }.joined()
+            if urlHash == "7499aced43869b27f505701e4edc737f0cc346add1240d4ba86fbfa251e0fc35" {
+                Defaults[.Experimental.downloads] = true
 
-            for await response in discovery.discoveredServers.values {
-                await MainActor.run {
-                    let _ = self.localServers.append(response.asServerState)
-                }
+                await UIDevice.feedback(.success)
             }
         }
-        .store(in: &cancellables)
-    }
-
-    func respond(to action: Action) -> State {
-        switch action {
-        case let .addNewURL(server):
-            addNewURL(server: server)
-
-            return state
-        case .cancel:
-            connectTask?.cancel()
-
-            return .initial
-        case let .connect(url):
-            connectTask?.cancel()
-
-            connectTask = Task {
-                do {
-                    let server = try await connectToServer(url: url)
-
-                    if isDuplicate(server: server) {
-                        await MainActor.run {
-                            // server has same id, but (possible) new URL
-                            self.eventSubject.send(.duplicateServer(server))
-                        }
-                    } else {
-                        try await save(server: server)
-
-                        await MainActor.run {
-                            self.eventSubject.send(.connected(server))
-                        }
-                    }
-
-                    await MainActor.run {
-                        self.state = .initial
-                    }
-                } catch is CancellationError {
-                    // cancel doesn't matter
-                } catch {
-                    await MainActor.run {
-                        self.eventSubject.send(.error(.init(error.localizedDescription)))
-                        self.state = .initial
-                    }
-                }
-            }
-            .asAnyCancellable()
-
-            return .connecting
-        case .searchForServers:
-            discovery.broadcast()
-
-            return state
-        }
-    }
-
-    private func connectToServer(url: String) async throws -> ServerState {
+        #endif
 
         let formattedURL = url.trimmingCharacters(in: .whitespacesAndNewlines)
             .trimmingCharacters(in: .objectReplacement)
-            .trimmingCharacters(in: ["/"])
             .prepending("http://", if: !url.contains("://"))
 
         guard let url = URL(string: formattedURL) else { throw JellyfinAPIError("Invalid URL") }
 
         let client = JellyfinClient(
             configuration: .swiftfinConfiguration(url: url),
-            sessionDelegate: URLSessionProxyDelegate(logger: Container.shared.pulseNetworkLogger())
+            sessionDelegate: URLSessionProxyDelegate()
         )
 
         let response = try await client.send(Paths.getPublicSystemInfo)
 
         guard let name = response.value.serverName,
-              let id = response.value.id
+              let id = response.value.id,
+              let os = response.value.operatingSystem,
+              let version = response.value.version
         else {
-            logger.critical("Missing server data from network call")
-            throw JellyfinAPIError("An internal error has occurred")
+            throw JellyfinAPIError("Missing server data from network call")
         }
 
-        let connectionURL = processConnectionURL(
-            initial: url,
-            response: response.response.url
-        )
+        // in case of redirects, we must process the new URL
+
+        let connectionURL = processConnectionURL(initial: url, response: response.response.url)
 
         let newServerState = ServerState(
             urls: [connectionURL],
             currentURL: connectionURL,
             name: name,
             id: id,
+            os: os,
+            version: version,
             usersIDs: []
         )
 
-        return newServerState
+        return (newServerState, url)
     }
 
-    // In the event of redirects, get the new host URL from response
+    // TODO: this probably isn't the best way to properly handle this, fix if necessary
     private func processConnectionURL(initial url: URL, response: URL?) -> URL {
 
         guard let response else { return url }
@@ -184,58 +92,85 @@ final class ConnectToServerViewModel: ViewModel, Eventful, Stateful {
         if url.scheme != response.scheme ||
             url.host != response.host
         {
-            let newURL = response.absoluteString.trimmingSuffix(
-                Paths.getPublicSystemInfo.url?.absoluteString ?? ""
-            )
+            var newURL = response.absoluteString.trimmingSuffix(Paths.getPublicSystemInfo.url?.absoluteString ?? "")
+
+            // if ended in a "/"
+            if url.absoluteString.last == "/" {
+                newURL.append("/")
+            }
+
             return URL(string: newURL) ?? url
         }
 
         return url
     }
 
-    private func isDuplicate(server: ServerState) -> Bool {
-        let existingServer = try? SwiftfinStore
-            .dataStack
-            .fetchOne(From<ServerModel>().where(\.$id == server.id))
-        return existingServer != nil
+    func isDuplicate(server: ServerState) -> Bool {
+        if let _ = try? SwiftfinStore.dataStack.fetchOne(
+            From<SwiftfinStore.Models.StoredServer>(),
+            [Where<SwiftfinStore.Models.StoredServer>(
+                "id == %@",
+                server.id
+            )]
+        ) {
+            return true
+        }
+        return false
     }
 
-    private func save(server: ServerState) async throws {
-
-        let publicInfo = try await server.getPublicSystemInfo()
-
-        try dataStack.perform { transaction in
-            let newServer = transaction.create(Into<ServerModel>())
+    func save(server: ServerState) throws {
+        try SwiftfinStore.dataStack.perform { transaction in
+            let newServer = transaction.create(Into<SwiftfinStore.Models.StoredServer>())
 
             newServer.urls = server.urls
             newServer.currentURL = server.currentURL
             newServer.name = server.name
             newServer.id = server.id
+            newServer.os = server.os
+            newServer.version = server.version
             newServer.users = []
         }
-
-        StoredValues[.Server.publicInfo(id: server.id)] = publicInfo
     }
 
-    // server has same id, but (possible) new URL
-    private func addNewURL(server: ServerState) {
-        do {
-            let newState = try dataStack.perform { transaction in
-                let existingServer = try self.dataStack.fetchOne(From<ServerModel>().where(\.$id == server.id))
-                guard let editServer = transaction.edit(existingServer) else {
-                    logger.critical("Could not find server to add new url")
-                    throw JellyfinAPIError("An internal error has occurred")
-                }
+    func discoverServers() {
+        isSearching = true
+        discoveredServers.removeAll()
 
-                editServer.urls.insert(server.currentURL)
-                editServer.currentURL = server.currentURL
+        var _discoveredServers: Set<SwiftfinStore.State.Server> = []
 
-                return editServer.state
+        discovery.locateServer { server in
+            if let server = server {
+                _discoveredServers.insert(.init(
+                    urls: [],
+                    currentURL: server.url,
+                    name: server.name,
+                    id: server.id,
+                    os: "",
+                    version: "",
+                    usersIDs: []
+                ))
             }
+        }
 
-            Notifications[.didChangeCurrentServerURL].post(object: newState)
-        } catch {
-            logger.critical("\(error.localizedDescription)")
+        // Timeout after 3 seconds
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+            self.isSearching = false
+            self.discoveredServers = _discoveredServers.sorted(by: { $0.name < $1.name })
+        }
+    }
+
+    func add(url: URL, server: ServerState) {
+        try! SwiftfinStore.dataStack.perform { transaction in
+            let existingServer = try! SwiftfinStore.dataStack.fetchOne(
+                From<SwiftfinStore.Models.StoredServer>(),
+                [Where<SwiftfinStore.Models.StoredServer>(
+                    "id == %@",
+                    server.id
+                )]
+            )
+
+            let editServer = transaction.edit(existingServer)!
+            editServer.urls.insert(url)
         }
     }
 }

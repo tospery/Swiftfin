@@ -14,7 +14,6 @@ import SwiftUI
 // TODO: Figure out proper tab bar handling with the collection offset
 // TODO: list columns
 // TODO: list row view (LibraryRow)
-// TODO: fix paging for next item focusing the tab
 
 struct PagingLibraryView<Element: Poster>: View {
 
@@ -22,7 +21,7 @@ struct PagingLibraryView<Element: Poster>: View {
     private var cinematicBackground
     @Default(.Customization.Library.posterType)
     private var posterType
-    @Default(.Customization.Library.displayType)
+    @Default(.Customization.Library.viewType)
     private var viewType
     @Default(.Customization.showPosterLabels)
     private var showPosterLabels
@@ -48,7 +47,7 @@ struct PagingLibraryView<Element: Poster>: View {
         self._viewModel = StateObject(wrappedValue: viewModel)
 
         let initialPosterType = Defaults[.Customization.Library.posterType]
-        let initialViewType = Defaults[.Customization.Library.displayType]
+        let initialViewType = Defaults[.Customization.Library.viewType]
 
         self._layout = State(
             initialValue: Self.makeLayout(
@@ -144,7 +143,6 @@ struct PagingLibraryView<Element: Poster>: View {
         Button(item.displayTitle)
     }
 
-    @ViewBuilder
     private var contentView: some View {
         CollectionVGrid(
             $viewModel.elements,
@@ -158,9 +156,6 @@ struct PagingLibraryView<Element: Poster>: View {
             case (_, .list):
                 listItemView(item: item)
             }
-        }
-        .onReachedBottomEdge(offset: .rows(3)) {
-            viewModel.send(.getNextPage)
         }
     }
 
@@ -196,7 +191,7 @@ struct PagingLibraryView<Element: Poster>: View {
                 viewModel.send(.refresh)
             }
         }
-        .onChange(of: focusedItem) { _, newValue in
+        .onChange(of: focusedItem) { newValue in
             guard let newValue else {
                 withAnimation {
                     presentBackground = false

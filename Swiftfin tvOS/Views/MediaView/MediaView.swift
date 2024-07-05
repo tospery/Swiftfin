@@ -20,7 +20,6 @@ struct MediaView: View {
     @StateObject
     private var viewModel = MediaViewModel()
 
-    @ViewBuilder
     private var contentView: some View {
         CollectionVGrid(
             $viewModel.mediaItems,
@@ -40,7 +39,6 @@ struct MediaView: View {
                     case .favorites:
                         let viewModel = ItemLibraryViewModel(
                             title: L10n.favorites,
-                            id: "favorites",
                             filters: .favorites
                         )
                         router.route(to: \.library, viewModel)

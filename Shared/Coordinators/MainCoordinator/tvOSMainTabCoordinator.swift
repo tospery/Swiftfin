@@ -56,7 +56,6 @@ final class MainTabCoordinator: TabCoordinatable {
     func makeTvTab(isActive: Bool) -> some View {
         HStack {
             Image(systemName: "tv")
-                .symbolRenderingMode(.monochrome)
             L10n.tvShows.text
         }
     }

@@ -7,10 +7,7 @@
 //
 
 import CoreStore
-import Defaults
-import Factory
 import Logging
-import Nuke
 import Pulse
 import PulseLogHandler
 import SwiftUI
@@ -19,11 +16,6 @@ import SwiftUI
 struct SwiftfinApp: App {
 
     init() {
-
-        // CoreStore
-
-        CoreStoreDefaults.dataStack = SwiftfinStore.dataStack
-        CoreStoreDefaults.logger = SwiftfinCorestoreLogger()
 
         // Logging
         LoggingSystem.bootstrap { label in
@@ -37,40 +29,13 @@ struct SwiftfinApp: App {
             return MultiplexLogHandler(loggers)
         }
 
-        // Nuke
-
-        ImageCache.shared.costLimit = 1024 * 1024 * 200 // 200 MB
-        ImageCache.shared.ttl = 300 // 5 min
-
-        ImageDecoderRegistry.shared.register { context in
-            guard let mimeType = context.urlResponse?.mimeType else { return nil }
-            return mimeType.contains("svg") ? ImageDecoders.Empty() : nil
-        }
-
-        ImagePipeline.shared = .Swiftfin.default
-
-        // UIKit
-
-        UINavigationBar.appearance().titleTextAttributes = [.foregroundColor: UIColor.label]
+        CoreStoreDefaults.dataStack = SwiftfinStore.dataStack
+        CoreStoreDefaults.logger = SwiftfinCorestoreLogger()
     }
 
     var body: some Scene {
         WindowGroup {
-            MainCoordinator()
-                .view()
-                .onNotification(UIApplication.didEnterBackgroundNotification) { _ in
-                    Defaults[.backgroundTimeStamp] = Date.now
-                }
-                .onNotification(UIApplication.willEnterForegroundNotification) { _ in
-                    // TODO: needs to check if any background playback is happening
-                    let backgroundedInterval = Date.now.timeIntervalSince(Defaults[.backgroundTimeStamp])
-
-                    if Defaults[.signOutOnBackground], backgroundedInterval > Defaults[.backgroundSignOutInterval] {
-                        Defaults[.lastSignedInUserID] = nil
-                        Container.shared.currentUserSession.reset()
-                        Notifications[.didSignOut].post()
-                    }
-                }
+            MainCoordinator().view()
         }
     }
 }

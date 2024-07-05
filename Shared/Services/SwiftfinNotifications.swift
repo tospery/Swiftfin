@@ -11,10 +11,10 @@ import Foundation
 
 class SwiftfinNotification {
 
-    @Injected(\.notificationCenter)
+    @Injected(Notifications.service)
     private var notificationService
 
-    let name: Notification.Name
+    private let name: Notification.Name
 
     fileprivate init(_ notificationName: Notification.Name) {
         self.name = notificationName
@@ -37,11 +37,9 @@ class SwiftfinNotification {
     }
 }
 
-extension Container {
-    var notificationCenter: Factory<NotificationCenter> { self { NotificationCenter.default }.singleton }
-}
-
 enum Notifications {
+
+    static let service = Factory(scope: .singleton) { NotificationCenter() }
 
     struct Key: Hashable {
 
@@ -78,12 +76,6 @@ extension Notifications.Key {
     static let didChangeCurrentServerURL = NotificationKey("didChangeCurrentServerURL")
     static let didSendStopReport = NotificationKey("didSendStopReport")
     static let didRequestGlobalRefresh = NotificationKey("didRequestGlobalRefresh")
-    static let didFailMigration = NotificationKey("didFailMigration")
 
     static let itemMetadataDidChange = NotificationKey("itemMetadataDidChange")
-
-    static let didConnectToServer = NotificationKey("didConnectToServer")
-    static let didDeleteServer = NotificationKey("didDeleteServer")
-
-    static let didChangeUserProfileImage = NotificationKey("didChangeUserProfileImage")
 }

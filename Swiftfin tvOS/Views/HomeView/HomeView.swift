@@ -8,6 +8,7 @@
 
 import Defaults
 import Foundation
+import Introspect
 import JellyfinAPI
 import SwiftUI
 
@@ -19,10 +20,6 @@ struct HomeView: View {
     @StateObject
     private var viewModel = HomeViewModel()
 
-    @Default(.Customization.showRecentlyAdded)
-    private var showRecentlyAdded
-
-    @ViewBuilder
     private var contentView: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
@@ -32,13 +29,10 @@ struct HomeView: View {
 
                     NextUpView(viewModel: viewModel.nextUpViewModel)
 
-                    if showRecentlyAdded {
-                        RecentlyAddedView(viewModel: viewModel.recentlyAddedViewModel)
-                    }
+                    RecentlyAddedView(viewModel: viewModel.recentlyAddedViewModel)
                 } else {
-                    if showRecentlyAdded {
-                        CinematicRecentlyAddedView(viewModel: viewModel.recentlyAddedViewModel)
-                    }
+                    CinematicRecentlyAddedView(viewModel: viewModel.recentlyAddedViewModel)
+
                     NextUpView(viewModel: viewModel.nextUpViewModel)
                 }
 

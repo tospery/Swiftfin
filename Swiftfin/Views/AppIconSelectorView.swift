@@ -84,12 +84,9 @@ extension AppIconSelectorView {
                     if icon.iconName == viewModel.currentAppIcon.iconName {
                         Image(systemName: "checkmark.circle.fill")
                             .resizable()
-                            .backport
-                            .fontWeight(.bold)
-                            .aspectRatio(1, contentMode: .fit)
-                            .frame(width: 24, height: 24)
-                            .symbolRenderingMode(.palette)
-                            .foregroundStyle(accentColor.overlayColor, accentColor)
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 20, height: 20)
+                            .paletteOverlayRendering()
                     }
                 }
             }

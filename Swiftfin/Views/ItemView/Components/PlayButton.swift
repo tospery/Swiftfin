@@ -19,7 +19,7 @@ extension ItemView {
         @Default(.accentColor)
         private var accentColor
 
-        @Injected(\.logService)
+        @Injected(LogManager.service)
         private var logger
 
         @EnvironmentObject

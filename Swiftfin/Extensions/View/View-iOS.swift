@@ -43,27 +43,27 @@ extension View {
     }
 
     func onAppDidEnterBackground(_ action: @escaping () -> Void) -> some View {
-        onNotification(UIApplication.didEnterBackgroundNotification, perform: { _ in action() })
+        onNotification(UIApplication.didEnterBackgroundNotification, perform: action)
     }
 
     func onAppWillResignActive(_ action: @escaping () -> Void) -> some View {
-        onNotification(UIApplication.willResignActiveNotification, perform: { _ in action() })
+        onNotification(UIApplication.willResignActiveNotification, perform: action)
     }
 
     func onAppWillTerminate(_ action: @escaping () -> Void) -> some View {
-        onNotification(UIApplication.willTerminateNotification, perform: { _ in action() })
+        onNotification(UIApplication.willTerminateNotification, perform: action)
     }
 
-    @ViewBuilder
-    func navigationBarCloseButton(
-        disabled: Bool = false,
-        _ action: @escaping () -> Void
-    ) -> some View {
-        modifier(
-            NavigationBarCloseButtonModifier(
-                disabled: disabled,
-                action: action
-            )
-        )
+    func navigationBarCloseButton(_ action: @escaping () -> Void) -> some View {
+        toolbar {
+            ToolbarItemGroup(placement: .topBarLeading) {
+                Button {
+                    action()
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .paletteOverlayRendering()
+                }
+            }
+        }
     }
 }

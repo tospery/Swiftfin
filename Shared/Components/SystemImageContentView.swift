@@ -8,39 +8,8 @@
 
 import SwiftUI
 
-// TODO: bottom view can probably just be cleaned up and change
-//       usages to use local background views
+// TODO: is the background color setting really the best way?
 
-struct RelativeSystemImageView: View {
-
-    @State
-    private var contentSize: CGSize = .zero
-
-    private let systemName: String
-    private let ratio: CGFloat
-
-    init(
-        systemName: String,
-        ratio: CGFloat = 0.5
-    ) {
-        self.systemName = systemName
-        self.ratio = ratio
-    }
-
-    var body: some View {
-        AlternateLayoutView {
-            Color.clear
-                .trackingSize($contentSize)
-        } content: {
-            Image(systemName: systemName)
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(width: contentSize.width * ratio, height: contentSize.height * ratio)
-        }
-    }
-}
-
-// TODO: cleanup and become the failure view for poster buttons
 struct SystemImageContentView: View {
 
     @State
@@ -49,24 +18,26 @@ struct SystemImageContentView: View {
     private var labelSize: CGSize = .zero
 
     private var backgroundColor: Color
-    private var ratio: CGFloat
+    private var heightRatio: CGFloat
     private let systemName: String
     private let title: String?
+    private var widthRatio: CGFloat
 
-    init(title: String? = nil, systemName: String?, ratio: CGFloat = 0.3) {
+    init(title: String? = nil, systemName: String?) {
         self.backgroundColor = Color.secondarySystemFill
-        self.ratio = ratio
+        self.heightRatio = 3
         self.systemName = systemName ?? "circle"
         self.title = title
+        self.widthRatio = 3.5
     }
 
-    @ViewBuilder
     private var imageView: some View {
         Image(systemName: systemName)
             .resizable()
             .aspectRatio(contentMode: .fit)
             .foregroundColor(.secondary)
-            .frame(width: contentSize.width * ratio, height: contentSize.height * ratio)
+            .accessibilityHidden(true)
+            .frame(width: contentSize.width / widthRatio, height: contentSize.height / heightRatio)
     }
 
     @ViewBuilder
@@ -76,7 +47,7 @@ struct SystemImageContentView: View {
                 .lineLimit(2)
                 .multilineTextAlignment(.center)
                 .font(.footnote.weight(.regular))
-                .foregroundStyle(.secondary)
+                .foregroundColor(.secondary)
                 .trackingSize($labelSize)
         }
     }
@@ -84,6 +55,7 @@ struct SystemImageContentView: View {
     var body: some View {
         ZStack {
             backgroundColor
+                .opacity(0.5)
 
             imageView
                 .frame(width: contentSize.width)
@@ -99,7 +71,12 @@ struct SystemImageContentView: View {
 
 extension SystemImageContentView {
 
-    func background(color: Color) -> Self {
+    func background(color: Color = Color.secondarySystemFill) -> Self {
         copy(modifying: \.backgroundColor, with: color)
+    }
+
+    func imageFrameRatio(width: CGFloat = 3.5, height: CGFloat = 3) -> Self {
+        copy(modifying: \.heightRatio, with: height)
+            .copy(modifying: \.widthRatio, with: width)
     }
 }
